@@ -2,12 +2,16 @@ import pygame
 
 pygame.init()
 
+
 screen_width = 880
 screen_height = 600
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("Game")
 
 gif = pygame.image.load("download.jpeg")
+
+FPS = 60
+FramePerSec = pygame.time.Clock()
 
 white = (255, 255, 255)
 black = (0,0,0)
@@ -42,8 +46,21 @@ class Player(pygame.sprite.Sprite):
     def draw(self, surface):
         surface.blit(self.image, self.rect)     
  
+
+class Background (pygame.sprite.Sprite):
+    def __init__(self):
+            super().__init__()
+            self.bgimage = pygame.image.load("download.png")
+            self.bgimage = pygame.transform.scale(self.bgimage, (screen_width,screen_height))
+            self.bgY = 0
+            self.bgX = 0
+        
+    def render(self):
+            screen.blit(self.bgimage, (self.bgX,self.bgY))
          
 P1 = Player()
+background = Background()
+
 
 game = True
 
@@ -54,6 +71,7 @@ while game:
     P1.update()
     screen.blit(gif, (280, 200))
     P1.draw(DISPLAYSURF)
+    background.render
     pygame.display.update()
 pygame.quit()
 quit()
