@@ -11,8 +11,6 @@ screen_height = 600
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("Game")
 
-gif = pygame.image.load("download.jpeg")
-
 FPS = 60
 FramePerSec = pygame.time.Clock()
 
@@ -72,8 +70,7 @@ while game:
         if event.type == pygame.QUIT:
             game = False
     P1.update()
-    screen.blit(gif, (280, 200))
-    P1.draw(DISPLAYSURF)
+    P1.draw(screen)
     background.render
     pygame.display.update()
 pygame.quit()
