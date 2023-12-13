@@ -7,6 +7,8 @@ screen_height = 600
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("Game")
 
+gif = pygame.image.load("download.jpeg")
+
 white = (255, 255, 255)
 black = (0,0,0)
 yellow = (255, 255, 200)
@@ -15,11 +17,13 @@ green = (0, 255, 0)
 blue = (50, 150, 215)
 
 game = True
+
 while game:
     for event in pygame.event.get(): 
         if event.type == pygame.QUIT:
             game = False
     pygame.display.update()
-
+    screen.blit(gif, (280, 200))
+    pygame.display.update()
 pygame.quit()
 quit()
