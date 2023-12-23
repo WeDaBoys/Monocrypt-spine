@@ -5,16 +5,19 @@ import sys
 
 pygame.init()
 
+#FPS
 FPS = 60
 FramePerSec = pygame.time.Clock()
 
+#screen information
 screen_width = 880
 screen_height = 700
 screen = pygame.display.set_mode((screen_width, screen_height),)
 pygame.display.set_caption("Game")
 
-gif = pygame.image.load("2-1.jpg").convert()
-gif = pygame.transform.scale(gif, (screen_width, screen_height))
+#background
+background = pygame.image.load("2-1.jpg").convert()
+background = pygame.transform.scale (background, (screen_width, screen_height))
 
 #colours
 white = (255, 255, 255)
@@ -51,24 +54,24 @@ class Player(pygame.sprite.Sprite):
     def draw(self, surface):
         surface.blit(self.image, self.rect)     
 
-
 P1 = Player()
 
-
+#game loop
 game = True
 while game:
     for event in pygame.event.get(): 
-        if event.type == pygame.QUIT:
-            game = False
+        if event.type == QUIT:
+            pygame.quit()
+            sys.exit()
+    screen.fill(white)
+    screen.blit(background, (0, 0))
+
     P1.update()
-    screen.blit(gif, (0, 0))
     P1.draw(screen)
+
     pygame.display.update()
     FramePerSec.tick(FPS)
 
-
-pygame.quit()
-quit()
 
 
 
