@@ -8,6 +8,7 @@ pygame.init()
 #FPS
 FPS = 60
 FramePerSec = pygame.time.Clock()
+SPEED = 5
 
 #screen information
 screen_width = 880
@@ -16,7 +17,7 @@ screen = pygame.display.set_mode((screen_width, screen_height),)
 pygame.display.set_caption("Game")
 
 #background
-background = pygame.image.load("2-1.jpg").convert()
+background = pygame.image.load("background.jpg").convert()
 background = pygame.transform.scale (background, (screen_width, screen_height))
 
 #colours
@@ -31,28 +32,30 @@ blue = (50, 150, 215)
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__() 
-        self.image = pygame.image.load("download.jpeg").convert()
+        self.image = pygame.image.load("player_front.png")
         self.rect = self.image.get_rect()
-        self.rect.center = (160, 520)
+        self.rect.center = (250, 250)
 
     def update(self):
         pressed_keys = pygame.key.get_pressed()
         if self.rect.top > 0:
             if pressed_keys[K_UP]:
-                self.rect.move_ip(0, -1)
+                self.image = pygame.image.load("player_front.png")
+                self.rect.move_ip(0, -SPEED)
         if self.rect.bottom < screen_height:    
             if pressed_keys[K_DOWN]:
-                self.rect.move_ip(0, 1)
-
+                self.image = pygame.image.load("player_front.png")
+                self.rect.move_ip(0, SPEED)
         if self.rect.left > 0:
             if pressed_keys[K_LEFT]:
-                self.rect.move_ip(-1, 0)
+                self.image = pygame.image.load("player_left.png")
+                self.rect.move_ip(-SPEED, 0)
         if self.rect.right < screen_width:        
             if pressed_keys[K_RIGHT]:
-                self.rect.move_ip(1, 0)
-
+                self.image = pygame.image.load("player_right.png")
+                self.rect.move_ip(SPEED, 0)
     def draw(self, surface):
-        surface.blit(self.image, self.rect)     
+        surface.blit(self.image, self.rect)       
 
 P1 = Player()
 
@@ -63,6 +66,7 @@ while game:
         if event.type == QUIT:
             pygame.quit()
             sys.exit()
+
     screen.fill(white)
     screen.blit(background, (0, 0))
 
