@@ -2,13 +2,23 @@ import pygame
 from pygame.locals import *
 import random
 import sys
+from tkinter import filedialog
+from tkinter import *
 
 pygame.init()
 
-#FPS
+#Variables
 FPS = 60
 FramePerSec = pygame.time.Clock()
 SPEED = 5
+vec = pygame.math.Vector2
+HEIGHT = 350
+WIDTH = 700
+ACC = 0.3
+FRIC = -0.10
+COUNT = 0
+x = 50
+y = 50
 
 #screen information
 screen_width = 880
@@ -17,7 +27,7 @@ screen = pygame.display.set_mode((screen_width, screen_height),)
 pygame.display.set_caption("Game")
 
 #background
-background = pygame.image.load("background.jpg").convert()
+background = pygame.image.load("background.jpg")
 background = pygame.transform.scale (background, (screen_width, screen_height))
 
 #colours
@@ -32,9 +42,30 @@ blue = (50, 150, 215)
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__() 
+        self.x = x
+        self.y = y
         self.image = pygame.image.load("player_front.png")
+        self.is_animated = False
+        self.sprite = []
+        self.sprite.append(pygame.image.load("player_right_0000.png"))
+        self.sprite.append(pygame.image.load("player_right_0001.png"))
+        self.sprite.append(pygame.image.load("player_right_0002.png"))
+        self.sprite.append(pygame.image.load("player_right_0003.png"))
+        self.sprite.append(pygame.image.load("player_right_0004.png"))
+        self.sprite.append(pygame.image.load("player_right_0005.png"))
+        self.sprite.append(pygame.image.load("player_right_0006.png"))
+        self.sprite.append(pygame.image.load("player_right_0007.png"))
+        self.sprite.append(pygame.image.load("player_right_0008.png"))
+        self.sprite.append(pygame.image.load("player_right_0009.png"))
+        self.sprite.append(pygame.image.load("player_right_0010.png"))
+        self.sprite.append(pygame.image.load("player_right_0011.png"))
+        self.sprite.append(pygame.image.load("player_right_0012.png"))
+        self.sprite.append(pygame.image.load("player_right_0013.png"))
+
+        self.current_sprite = 0
+        self.image = self.sprite[self.current_sprite]
         self.rect = self.image.get_rect()
-        self.rect.center = (250, 250)
+        self.rect.center = (500, 250)
 
     def update(self):
         pressed_keys = pygame.key.get_pressed()
@@ -54,10 +85,15 @@ class Player(pygame.sprite.Sprite):
             if pressed_keys[K_RIGHT]:
                 self.image = pygame.image.load("player_right.png")
                 self.rect.move_ip(SPEED, 0)
+                self.current_sprite  += 0.4
+                if self.current_sprite >= len(self.sprite):
+                    self.current_sprite = 0
+                self.image = self.sprite[int(self.current_sprite)]
+
     def draw(self, surface):
         surface.blit(self.image, self.rect)       
 
-P1 = Player()
+P1 = Player(200, 410)
 
 #game loop
 game = True
@@ -69,10 +105,8 @@ while game:
 
     screen.fill(white)
     screen.blit(background, (0, 0))
-
-    P1.update()
     P1.draw(screen)
-
+    P1.update()
     pygame.display.update()
     FramePerSec.tick(FPS)
 
