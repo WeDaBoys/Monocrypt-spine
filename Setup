@@ -38,6 +38,29 @@ red = (215, 50, 80)
 green = (0, 255, 0)
 blue = (50, 150, 215)
 
+
+# Define bullets list
+bullets = []
+# Add a flag for the shooting key
+shooting = False
+
+class Bullet:
+    def __init__(self, x, y, speed, direction, image):
+        self.x = x
+        self.y = y
+        self.speed = speed
+        self.direction = direction
+        self.image = pygame.image.load(image)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+
+    def move(self):
+        self.x += self.direction.x * self.speed
+        self.y += self.direction.y * self.speed
+    def draw(self, screen):
+        screen.blit(self.image, (self.x, self.y))
+
+
 #player
 class Player(pygame.sprite.Sprite):
     def __init__(self):
@@ -66,6 +89,7 @@ class Player(pygame.sprite.Sprite):
         self.image = self.sprite[self.current_sprite]
         self.rect = self.image.get_rect()
         self.rect.center = (500, 250)
+        self.direction = pygame.math.Vector2(0, -1)  # Default direction is up
 
     def update(self):
         pressed_keys = pygame.key.get_pressed()
@@ -73,27 +97,42 @@ class Player(pygame.sprite.Sprite):
             if pressed_keys[K_UP]:
                 self.image = pygame.image.load("player_front.png")
                 self.rect.move_ip(0, -SPEED)
+                self.direction = pygame.math.Vector2(0, -1)  # Up
         if self.rect.bottom < screen_height:    
             if pressed_keys[K_DOWN]:
                 self.image = pygame.image.load("player_front.png")
                 self.rect.move_ip(0, SPEED)
+                self.direction = pygame.math.Vector2(0, 1)  # Down
         if self.rect.left > 0:
             if pressed_keys[K_LEFT]:
                 self.image = pygame.image.load("player_left.png")
                 self.rect.move_ip(-SPEED, 0)
+                self.direction = pygame.math.Vector2(-1, 0)  # Left
         if self.rect.right < screen_width:        
             if pressed_keys[K_RIGHT]:
                 self.image = pygame.image.load("player_right.png")
                 self.rect.move_ip(SPEED, 0)
-                self.current_sprite  += 0.4
-                if self.current_sprite >= len(self.sprite):
-                    self.current_sprite = 0
-                self.image = self.sprite[int(self.current_sprite)]
+                self.direction = pygame.math.Vector2(1, 0)  # Right
+
+        # Update the sprite for the walking animation
+        if pressed_keys[K_LEFT] or pressed_keys[K_RIGHT] or pressed_keys[K_UP] or pressed_keys[K_DOWN]:
+            self.current_sprite += 0.2
+            if self.current_sprite >= len(self.sprite):
+                self.current_sprite = 0
+            self.image = self.sprite[int(self.current_sprite)]
+
+             # Flip the sprite if moving left
+            if pressed_keys[K_LEFT]:
+                self.image = pygame.transform.flip(self.image, True, False)
 
     def draw(self, surface):
         surface.blit(self.image, self.rect)       
 
-P1 = Player(200, 410)
+P1 = Player()
+
+
+        
+
 
 #game loop
 game = True
@@ -102,15 +141,23 @@ while game:
         if event.type == QUIT:
             pygame.quit()
             sys.exit()
+        elif event.type == KEYDOWN:
+            if event.key == K_c and not shooting:  # Only shoot if the key is not already pressed
+                bullet = Bullet(P1.rect.centerx, P1.rect.top, 6, P1.direction, 'bullet.png')  # Pass the player's direction
+                bullets.append(bullet)
+                shooting = True  # Set the flag to True when the key is pressed
+        elif event.type == KEYUP:
+            if event.key == K_c:
+                shooting = False  # Set the flag to False when the key is released
 
+
+    for bullet in bullets:
+        bullet.move()
+        bullet.draw(screen)
+    pygame.display.update()
     screen.fill(white)
     screen.blit(background, (0, 0))
     P1.draw(screen)
     P1.update()
     pygame.display.update()
     FramePerSec.tick(FPS)
-
-
-
-
-
