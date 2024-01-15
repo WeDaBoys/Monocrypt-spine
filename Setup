@@ -29,6 +29,7 @@ pygame.display.set_caption("Game")
 #background
 background = pygame.image.load("background.jpg")
 background = pygame.transform.scale (background, (screen_width, screen_height))
+screen_width, screen_height = background.get_size()
 
 #colours
 white = (255, 255, 255)
@@ -38,10 +39,37 @@ red = (215, 50, 80)
 green = (0, 255, 0)
 blue = (50, 150, 215)
 
+#game over
+def game_over_screen():
+    font = pygame.font.Font(None, 36)
+    text = font.render("You Died", True, (255, 0, 0))
+    text_rect = text.get_rect(center=(screen_width/2, screen_height/2))
 
-# Define bullets list
+    retry_text = font.render("Press R to Retry", True, (255, 255, 255))
+    retry_text_rect = retry_text.get_rect(center=(screen_width/2, screen_height/2 + 50))
+
+    quit_text = font.render("Press Q to Quit", True, (255, 255, 255))
+    quit_text_rect = quit_text.get_rect(center=(screen_width/2, screen_height/2 + 100))
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:  
+                    return True  
+                elif event.key == pygame.K_q:  
+                    return False  
+
+        screen.fill(black)
+        screen.blit(text, text_rect)
+        screen.blit(retry_text, retry_text_rect)
+        screen.blit(quit_text, quit_text_rect)
+        pygame.display.flip()
+
+#bullets variables
 bullets = []
-# Add a flag for the shooting key
 shooting = False
 
 class Bullet:
@@ -55,10 +83,10 @@ class Bullet:
         self.rect.center = (x, y)
 
     def move(self):
-        self.x += self.direction.x * self.speed
-        self.y += self.direction.y * self.speed
+        dir_norm = self.direction.normalize()
+        self.rect.move_ip(dir_norm.x * self.speed, dir_norm.y * self.speed)
     def draw(self, screen):
-        screen.blit(self.image, (self.x, self.y))
+        screen.blit(self.image, self.rect)
 
 
 #player
@@ -89,50 +117,113 @@ class Player(pygame.sprite.Sprite):
         self.image = self.sprite[self.current_sprite]
         self.rect = self.image.get_rect()
         self.rect.center = (500, 250)
-        self.direction = pygame.math.Vector2(0, -1)  # Default direction is up
+        self.direction = pygame.math.Vector2(0, -1)  
+
+        self.health = 100
 
     def update(self):
         pressed_keys = pygame.key.get_pressed()
         if self.rect.top > 0:
-            if pressed_keys[K_UP]:
+            if pressed_keys[K_w]:
                 self.image = pygame.image.load("player_front.png")
+                self.rect = self.image.get_rect(topleft=self.rect.topleft)
                 self.rect.move_ip(0, -SPEED)
                 self.direction = pygame.math.Vector2(0, -1)  # Up
         if self.rect.bottom < screen_height:    
-            if pressed_keys[K_DOWN]:
+            if pressed_keys[K_s]:
                 self.image = pygame.image.load("player_front.png")
+                self.rect = self.image.get_rect(topleft=self.rect.topleft)
                 self.rect.move_ip(0, SPEED)
                 self.direction = pygame.math.Vector2(0, 1)  # Down
         if self.rect.left > 0:
-            if pressed_keys[K_LEFT]:
+            if pressed_keys[K_a]:
                 self.image = pygame.image.load("player_left.png")
+                self.rect = self.image.get_rect(topleft=self.rect.topleft)
                 self.rect.move_ip(-SPEED, 0)
                 self.direction = pygame.math.Vector2(-1, 0)  # Left
         if self.rect.right < screen_width:        
-            if pressed_keys[K_RIGHT]:
+            if pressed_keys[K_d]:
                 self.image = pygame.image.load("player_right_0000.png")
+                self.rect = self.image.get_rect(topleft=self.rect.topleft)
                 self.rect.move_ip(SPEED, 0)
                 self.direction = pygame.math.Vector2(1, 0)  # Right
 
-        # Update the sprite for the walking animation
-        if pressed_keys[K_LEFT] or pressed_keys[K_RIGHT] or pressed_keys[K_UP] or pressed_keys[K_DOWN]:
+        
+        if pressed_keys[K_a] or pressed_keys[K_d] or pressed_keys[K_w] or pressed_keys[K_s]:
             self.current_sprite += 0.2
             if self.current_sprite >= len(self.sprite):
                 self.current_sprite = 0
             self.image = self.sprite[int(self.current_sprite)]
 
-             # Flip the sprite if moving left
-            if pressed_keys[K_LEFT]:
+             
+            if pressed_keys[K_a]:
                 self.image = pygame.transform.flip(self.image, True, False)
 
     def draw(self, surface):
-        surface.blit(self.image, self.rect)       
+        surface.blit(self.image, self.rect)   
+
+    def draw_health_bar(self, surface):
+
+        font = pygame.font.Font(None, 24)  
+
+        
+        text_surface = font.render('LIFE', True, (255, 0, 0)) 
+
+        
+        surface.blit(text_surface, (10, 10))
+
+       
+        pygame.draw.rect(surface, (0, 0, 0), (50, 10, 100, 10)) 
+        health_width = int((self.health * 100) / 100)  
+        pygame.draw.rect(surface, (255, 255, 255), (50, 10, health_width, 10))  
 
 P1 = Player()
 
+class Enemy:
+    def __init__(self, x, y, speed, image):
+        self.rect = pygame.Rect(x, y, 50, 50)  
+        self.speed = speed
+        self.image = pygame.image.load(image)
+        self.image = pygame.transform.scale(self.image, (self.rect.width, self.rect.height)) 
+        self.bullets = []
+        self.shoot_delay = 45
+        self.direction = pygame.math.Vector2(0, 0)
 
-        
+    def draw(self, surface):
+        surface.blit(self.image, self.rect)
 
+    def shoot(self, target):
+        if self.shoot_delay <= 0:  
+            dir_vector = vec(target.rect.centerx - self.rect.centerx, target.rect.centery - self.rect.centery)
+            bullet = Bullet(self.rect.centerx, self.rect.centery, 6, dir_vector, 'bullet.png') 
+            self.bullets.append(bullet)
+            self.shoot_delay = 45 
+
+    def update(self):
+        if random.randint(0, 50) == 1:  
+            new_direction = pygame.math.Vector2(random.uniform(-1, 1), random.uniform(-1, 1))
+
+            
+            new_x = self.rect.x + self.speed * new_direction[0]
+            new_y = self.rect.y + self.speed * new_direction[1]
+
+            
+            if 0 <= new_x <= screen_width - self.rect.width and 0 <= new_y <= screen_height - self.rect.height:
+                self.direction = new_direction   
+
+        new_x = self.rect.x + self.speed * self.direction[0]
+        new_y = self.rect.y + self.speed * self.direction[1]
+
+        if 0 <= new_x <= screen_width - self.rect.width:
+                    self.rect.x = new_x
+        if 0 <= new_y <= screen_height - self.rect.height:
+                    self.rect.y = new_y
+
+        if self.shoot_delay > 0:
+            self.shoot_delay -= 1
+
+
+enemy = Enemy(100, 100, 2, 'enemy.png')
 
 #game loop
 game = True
@@ -141,23 +232,56 @@ while game:
         if event.type == QUIT:
             pygame.quit()
             sys.exit()
-        elif event.type == KEYDOWN:
-            if event.key == K_c and not shooting:  # Only shoot if the key is not already pressed
-                bullet = Bullet(P1.rect.centerx, P1.rect.top, 6, P1.direction, 'bullet.png')  # Pass the player's direction
+        elif event.type == MOUSEBUTTONDOWN:
+            if event.button == 1:
+                mouse_pos = pygame.mouse.get_pos()
+                dir_vector = vec(mouse_pos[0] - P1.rect.centerx, mouse_pos[1] - P1.rect.centery)
+                bullet = Bullet(P1.rect.centerx, P1.rect.centery, 6, dir_vector, 'bullet.png') 
                 bullets.append(bullet)
-                shooting = True  # Set the flag to True when the key is pressed
-        elif event.type == KEYUP:
-            if event.key == K_c:
-                shooting = False  # Set the flag to False when the key is released
+                shooting = True 
+        elif event.type == MOUSEBUTTONUP:
+            if event.button == 1:
+                shooting = False 
 
+  
+    P1.update()
+    enemy.update()  
+    for bullet in bullets:
+        bullet.move()
+    for bullet in enemy.bullets:
+        bullet.move()
 
-    pygame.display.update()
+    
+    if enemy.shoot_delay <= 0:
+        enemy.shoot(P1)
+
+    for bullet in enemy.bullets:
+        if P1.rect.colliderect(bullet.rect):
+            P1.health -= 10 
+            enemy.bullets.remove(bullet)  
+            print(P1.health)
+    if P1.health <= 0:
+        if game_over_screen():  
+            P1 = Player()  
+            enemy = Enemy(100, 100, 2, 'enemy.png')  
+            bullets = []  # 
+        else:
+            pygame.quit()
+            sys.exit()
+        
+
+   
     screen.fill(white)
     screen.blit(background, (0, 0))
     for bullet in bullets:
-        bullet.move()
+        bullet.draw(screen)
+    for bullet in enemy.bullets:
         bullet.draw(screen)
     P1.draw(screen)
-    P1.update()
+    P1.draw_health_bar(screen)
+    enemy.draw(screen)
+
+   
     pygame.display.update()
+
     FramePerSec.tick(FPS)
