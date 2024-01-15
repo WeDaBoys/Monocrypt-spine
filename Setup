@@ -179,6 +179,7 @@ class Player(pygame.sprite.Sprite):
 
 P1 = Player()
 
+#Enemy
 class Enemy:
     def __init__(self, x, y, speed, image):
         self.rect = pygame.Rect(x, y, 50, 50)  
@@ -188,6 +189,7 @@ class Enemy:
         self.bullets = []
         self.shoot_delay = 45
         self.direction = pygame.math.Vector2(0, 0)
+        self.health = 100
 
     def draw(self, surface):
         surface.blit(self.image, self.rect)
@@ -250,9 +252,14 @@ while game:
         bullet.move()
     for bullet in enemy.bullets:
         bullet.move()
-
     
-    if enemy.shoot_delay <= 0:
+    for bullet in bullets:
+        bullet.draw(screen)
+        if bullet.rect.colliderect(enemy.rect):  # Check if the bullet collides with the enemy
+            enemy.health -= 50  # Decrease the enemy's health
+            bullets.remove(bullet)  # Remove the bullet
+    
+    if enemy.health > 0 and enemy.shoot_delay == 0:
         enemy.shoot(P1)
 
     for bullet in enemy.bullets:
@@ -270,7 +277,6 @@ while game:
             sys.exit()
         
 
-   
     screen.fill(white)
     screen.blit(background, (0, 0))
     for bullet in bullets:
@@ -279,7 +285,8 @@ while game:
         bullet.draw(screen)
     P1.draw(screen)
     P1.draw_health_bar(screen)
-    enemy.draw(screen)
+    if enemy.health > 0:
+        enemy.draw(screen)
 
    
     pygame.display.update()
