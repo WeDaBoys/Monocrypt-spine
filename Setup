@@ -19,6 +19,8 @@ FRIC = -0.10
 COUNT = 0
 x = 50
 y = 50
+HEART_WIDTH = 30
+HEART_HEIGHT = 30
 
 #screen information
 screen_width = 880
@@ -38,6 +40,32 @@ yellow = (255, 255, 200)
 red = (215, 50, 80)
 green = (0, 255, 0)
 blue = (50, 150, 215)
+
+#start
+def start_screen():
+    title_font = pygame.font.Font(None, 90) 
+    instructions_font = pygame.font.Font(None, 50) 
+
+    title = title_font.render("MONOCRYPT", True, (255, 255, 255))
+    title_rect = title.get_rect(center=(screen_width/2, screen_height/2))
+
+    instructions = instructions_font.render("Press SPACE to Start", True, (255, 255, 255))
+    instructions_rect = instructions.get_rect(center=(screen_width/2, screen_height/2 + 50))
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:  
+                    return  
+
+        screen.fill(black)
+        screen.blit(title, title_rect)
+        screen.blit(instructions, instructions_rect)
+        pygame.display.flip()
+
 
 #game over
 def game_over_screen():
@@ -119,7 +147,9 @@ class Player(pygame.sprite.Sprite):
         self.rect.center = (500, 250)
         self.direction = pygame.math.Vector2(0, -1)  
 
-        self.health = 100
+        self.health = 80
+        self.heart_image = pygame.image.load("heart.png")
+        self.heart_image = pygame.transform.scale(self.heart_image, (HEART_WIDTH, HEART_HEIGHT))
 
     def update(self):
         pressed_keys = pygame.key.get_pressed()
@@ -161,21 +191,11 @@ class Player(pygame.sprite.Sprite):
 
     def draw(self, surface):
         surface.blit(self.image, self.rect)   
-
-    def draw_health_bar(self, surface):
-
-        font = pygame.font.Font(None, 24)  
-
-        
-        text_surface = font.render('LIFE', True, (255, 0, 0)) 
-
-        
-        surface.blit(text_surface, (10, 10))
-
-       
-        pygame.draw.rect(surface, (0, 0, 0), (50, 10, 100, 10)) 
-        health_width = int((self.health * 100) / 100)  
-        pygame.draw.rect(surface, (255, 255, 255), (50, 10, health_width, 10))  
+    
+    #health bar
+    def draw_health_hearts(self, surface):
+        for i in range(self.health // 20):  # Assuming each heart represents 10 health points
+            surface.blit(self.heart_image, (10 + i * HEART_WIDTH, 10))  # Draw a heart for each 10 health points
 
 P1 = Player()
 
@@ -188,7 +208,7 @@ class Enemy:
         self.image = pygame.transform.scale(self.image, (self.rect.width, self.rect.height)) 
         self.bullets = []
         self.shoot_delay = 45
-        self.direction = pygame.math.Vector2(0, 0)
+        self.direction = pygame.math.Vector2(1, 2)
         self.health = 100
 
     def draw(self, surface):
@@ -226,7 +246,7 @@ class Enemy:
 
 
 enemy = Enemy(100, 100, 2, 'enemy.png')
-
+start_screen()
 #game loop
 game = True
 while game:
@@ -264,7 +284,7 @@ while game:
 
     for bullet in enemy.bullets:
         if P1.rect.colliderect(bullet.rect):
-            P1.health -= 10 
+            P1.health -= 20 
             enemy.bullets.remove(bullet)  
             print(P1.health)
     if P1.health <= 0:
@@ -284,7 +304,7 @@ while game:
     for bullet in enemy.bullets:
         bullet.draw(screen)
     P1.draw(screen)
-    P1.draw_health_bar(screen)
+    P1.draw_health_hearts(screen)
     if enemy.health > 0:
         enemy.draw(screen)
 
