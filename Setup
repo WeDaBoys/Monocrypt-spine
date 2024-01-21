@@ -197,6 +197,9 @@ class Player(pygame.sprite.Sprite):
         for i in range(self.health // 20):  # Assuming each heart represents 10 health points
             surface.blit(self.heart_image, (10 + i * HEART_WIDTH, 10))  # Draw a heart for each 10 health points
 
+
+
+
 P1 = Player()
 
 #Enemy
@@ -244,10 +247,28 @@ class Enemy:
         if self.shoot_delay > 0:
             self.shoot_delay -= 1
 
+#Stages 
 
+
+
+class Stage():
+    def __init__(self,stages):
+        self.font = pygame.font.Font("COMIC.ttf",32)
+        self.x = -100
+        self.y = 100
+        self.text = self.font.render(f"STAGE: {stages,0}", True, white)
+
+    def draw(self,screen):
+        self.text = self.font.render(f"STAGE: {stages,0}", True, white)
+        screen.blit(self.text, ((750), (650)))
+
+
+stages = 0
 enemy = Enemy(100, 100, 2, 'enemy.png')
 start_screen()
 #game loop
+stage = Stage(stages)
+
 game = True
 while game:
     for event in pygame.event.get(): 
@@ -261,6 +282,8 @@ while game:
                 bullet = Bullet(P1.rect.centerx, P1.rect.centery, 6, dir_vector, 'bullet.png') 
                 bullets.append(bullet)
                 shooting = True 
+                
+
         elif event.type == MOUSEBUTTONUP:
             if event.button == 1:
                 shooting = False 
@@ -281,6 +304,10 @@ while game:
     
     if enemy.health > 0 and enemy.shoot_delay == 0:
         enemy.shoot(P1)
+            
+
+    
+        
 
     for bullet in enemy.bullets:
         if P1.rect.colliderect(bullet.rect):
@@ -292,13 +319,15 @@ while game:
             P1 = Player()  
             enemy = Enemy(100, 100, 2, 'enemy.png')  
             bullets = []  # 
+            stages = 0
         else:
             pygame.quit()
             sys.exit()
-        
+    
 
     screen.fill(white)
     screen.blit(background, (0, 0))
+    stage.draw(screen)
     for bullet in bullets:
         bullet.draw(screen)
     for bullet in enemy.bullets:
@@ -307,6 +336,11 @@ while game:
     P1.draw_health_hearts(screen)
     if enemy.health > 0:
         enemy.draw(screen)
+    elif enemy.health == 0:
+        stages += 1
+        print (stages)
+        stage.draw(screen)
+
 
    
     pygame.display.update()
