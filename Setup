@@ -253,15 +253,18 @@ class Enemy:
 
 active_enemies = []
 enemy = Enemy(100, 100, 2, 'enemy.png')
-active_enemies.append(enemy)
 
 # Spawn New Enemies
+enemy_count = 1
+
 def spawn_new_enemies(num_enemies):
     for _ in range(num_enemies):
         new_enemy = Enemy(random.randint(0, screen_width - 50), random.randint(0, screen_height - 50), 2, 'enemy.png')
         active_enemies.append(new_enemy)
 
 start_screen()
+spawn_new_enemies(enemy_count)
+
 #game loop
 game = True
 while game:
@@ -281,58 +284,71 @@ while game:
                 shooting = False 
 
   
-    P1.update()
-    enemy.update()  
     for bullet in bullets:
-        bullet.move()
-    for bullet in enemy.bullets:
         bullet.move()
     
     for bullet in bullets:
         bullet.draw(screen)
-        if bullet.rect.colliderect(enemy.rect):  # Check if the bullet collides with the enemy
-            enemy.health -= 50  # Decrease the enemy's health
-            bullets.remove(bullet)  # Remove the bullet
+        for enemy in active_enemies:
+            if bullet.rect.colliderect(enemy.rect):  # Check if the bullet collides with the enemy
+                enemy.health -= 50  # Decrease the enemy's health
+                bullets.remove(bullet)  # Remove the bullet
     
-    if enemy.health > 0 and enemy.shoot_delay == 0:
-        enemy.shoot(P1)
+    for enemy in active_enemies:
 
-    for bullet in enemy.bullets:
-        if P1.rect.colliderect(bullet.rect):
-            P1.health -= 20 
-            enemy.bullets.remove(bullet)  
-            print(P1.health)
+        for bullet in enemy.bullets:
+            bullet.move()
+
+        enemy.update()
+        enemy.draw(screen)
+
+        if enemy.health > 0 and enemy.shoot_delay == 0:
+            enemy.shoot(P1)
+
+        if enemy.health <= 0:
+            active_enemies.remove(enemy) # Removes enemy from active_enemies list when killed
+
+        if not active_enemies:
+            enemy_count += 1
+            spawn_new_enemies(enemy_count) # Spawns new enemies when active_enemies list is empty
+        
+        for bullet in enemy.bullets:
+            if P1.rect.colliderect(bullet.rect):
+                P1.health -= 0 
+                enemy.bullets.remove(bullet)  
+                print(P1.health)
+
     if P1.health <= 0:
         if game_over_screen():  
             P1 = Player()
-            enemy = Enemy(100, 100, 2, 'enemy.png')  
+            active_enemies.clear()
+            enemy = Enemy(100, 100, 2, 'enemy.png')
+            enemy_count = 1
+            spawn_new_enemies(enemy_count)
             bullets = []
         else:
             pygame.quit()
             sys.exit()
         
+    P1.update()
+    enemy.update()  
 
     screen.fill(white)
     screen.blit(background, (0, 0))
     for bullet in bullets:
         bullet.draw(screen)
-    for bullet in enemy.bullets:
-        bullet.draw(screen)
+    for enemy in active_enemies:
+        for bullet in enemy.bullets:
+            bullet.draw(screen)
     P1.draw(screen)
     P1.draw_health_hearts(screen)
-    for enemy in active_enemies: # Only draw active enemies
-        enemy.update()
-        enemy.draw(screen)
-        # Display enemy health
+    for enemy in active_enemies:
+
         health_text = f"Enemy Health: {enemy.health}"
         display_text(health_text, 10, 50)
+    
         if enemy.health > 0:
             enemy.draw(screen) # Enemy only gets drawn when alive
-        if enemy.health <= 0:
-            active_enemies.remove(enemy) # Removes enemy from active_enemies list when killed
-        if not active_enemies:
-            spawn_new_enemies(3) # Spawns new enemies when active_enemies list is empty
-   
     pygame.display.update()
 
     FramePerSec.tick(FPS)
