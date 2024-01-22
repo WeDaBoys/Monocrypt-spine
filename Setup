@@ -41,6 +41,13 @@ red = (215, 50, 80)
 green = (0, 255, 0)
 blue = (50, 150, 215)
 
+#font
+font = pygame.font.Font(None, 36)
+text_color = (255, 255, 255)
+def display_text(text, x, y):
+    text_surface = font.render(text, True, text_color)
+    screen.blit(text_surface, (x, y))
+
 #start
 def start_screen():
     title_font = pygame.font.Font(None, 90) 
@@ -244,8 +251,16 @@ class Enemy:
         if self.shoot_delay > 0:
             self.shoot_delay -= 1
 
-
+active_enemies = []
 enemy = Enemy(100, 100, 2, 'enemy.png')
+active_enemies.append(enemy)
+
+# Spawn New Enemies
+def spawn_new_enemies(num_enemies):
+    for _ in range(num_enemies):
+        new_enemy = Enemy(random.randint(0, screen_width - 50), random.randint(0, screen_height - 50), 2, 'enemy.png')
+        active_enemies.append(new_enemy)
+
 start_screen()
 #game loop
 game = True
@@ -289,9 +304,9 @@ while game:
             print(P1.health)
     if P1.health <= 0:
         if game_over_screen():  
-            P1 = Player()  
+            P1 = Player()
             enemy = Enemy(100, 100, 2, 'enemy.png')  
-            bullets = []  # 
+            bullets = []
         else:
             pygame.quit()
             sys.exit()
@@ -305,9 +320,18 @@ while game:
         bullet.draw(screen)
     P1.draw(screen)
     P1.draw_health_hearts(screen)
-    if enemy.health > 0:
+    for enemy in active_enemies: # Only draw active enemies
+        enemy.update()
         enemy.draw(screen)
-
+        # Display enemy health
+        health_text = f"Enemy Health: {enemy.health}"
+        display_text(health_text, 10, 50)
+        if enemy.health > 0:
+            enemy.draw(screen) # Enemy only gets drawn when alive
+        if enemy.health <= 0:
+            active_enemies.remove(enemy) # Removes enemy from active_enemies list when killed
+        if not active_enemies:
+            spawn_new_enemies(3) # Spawns new enemies when active_enemies list is empty
    
     pygame.display.update()
 
