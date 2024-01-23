@@ -20,10 +20,11 @@ FRIC = -0.10
 COUNT = 0
 x = 50
 y = 50
-HEART_WIDTH = 30
-HEART_HEIGHT = 30
+HEART_WIDTH = 70
+HEART_HEIGHT = 70
 TELEPORT_DISTANCE = 100
 TELEPORT_COOLDOWN = 60 * 5
+score = 0
 
 #screen information
 screen_width = 1320
@@ -45,7 +46,7 @@ green = (0, 255, 0)
 blue = (50, 150, 215)
 
 #font
-font = pygame.font.Font(None, 36)
+font = pygame.font.Font(None, 50)
 text_color = (255, 255, 255)
 def display_text(text, x, y):
     text_surface = font.render(text, True, text_color)
@@ -79,15 +80,19 @@ def start_screen():
 
 #game over
 def game_over_screen():
-    font = pygame.font.Font(None, 36)
+    font = pygame.font.Font(None, 50)
     text = font.render("You Died", True, (255, 0, 0))
-    text_rect = text.get_rect(center=(screen_width/2, screen_height/2))
+    text_rect = text.get_rect(center=(screen_width/2, screen_height/2 -150))
 
     retry_text = font.render("Press R to Retry", True, (255, 255, 255))
-    retry_text_rect = retry_text.get_rect(center=(screen_width/2, screen_height/2 + 50))
+    retry_text_rect = retry_text.get_rect(center=(screen_width/2, screen_height/2 + 0))
 
     quit_text = font.render("Press Q to Quit", True, (255, 255, 255))
-    quit_text_rect = quit_text.get_rect(center=(screen_width/2, screen_height/2 + 100))
+    quit_text_rect = quit_text.get_rect(center=(screen_width/2, screen_height/2 + 70))
+    global score
+
+    score_text = font.render(f'Your score is: {score}', True, (255, 255, 255))
+    score_text_rect = score_text.get_rect(center=(screen_width/2, screen_height/2 + 150))  # Center the score text
 
     while True:
         for event in pygame.event.get():
@@ -104,8 +109,8 @@ def game_over_screen():
         screen.blit(text, text_rect)
         screen.blit(retry_text, retry_text_rect)
         screen.blit(quit_text, quit_text_rect)
+        screen.blit(score_text, score_text_rect)  # Display the score text
         pygame.display.flip()
-
 #bullets variables
 bullets = []
 shooting = False
@@ -176,25 +181,25 @@ class Player(pygame.sprite.Sprite):
 
     def update(self):
         pressed_keys = pygame.key.get_pressed()
-        if self.rect.top > 80:
+        if self.rect.top > 100:
             if pressed_keys[K_w]:
                 self.image = pygame.image.load("player_front.png")
                 self.rect = self.image.get_rect(topleft=self.rect.topleft)
                 self.rect.move_ip(0, -SPEED)
                 self.direction = pygame.math.Vector2(0, -1)  # Up
-        if self.rect.bottom < (screen_height - 80):    
+        if self.rect.bottom < (screen_height - 100):    
             if pressed_keys[K_s]:
                 self.image = pygame.image.load("player_front.png")
                 self.rect = self.image.get_rect(topleft=self.rect.topleft)
                 self.rect.move_ip(0, SPEED)
                 self.direction = pygame.math.Vector2(0, 1)  # Down
-        if self.rect.left > 90:
+        if self.rect.left > 100:
             if pressed_keys[K_a]:
                 self.image = pygame.image.load("player_left.png")
                 self.rect = self.image.get_rect(topleft=self.rect.topleft)
                 self.rect.move_ip(-SPEED, 0)
                 self.direction = pygame.math.Vector2(-1, 0)  # Left
-        if self.rect.right < (screen_width - 80):        
+        if self.rect.right < (screen_width - 100):        
             if pressed_keys[K_d]:
                 self.image = pygame.image.load("player_right_0000.png")
                 self.rect = self.image.get_rect(topleft=self.rect.topleft)
@@ -233,11 +238,16 @@ class Player(pygame.sprite.Sprite):
         return current_frame - self.last_teleport_frame >= TELEPORT_COOLDOWN
 
     def teleport(self, current_frame):
-        self.is_teleporting = True
+        self.is_teleporting = Trueaaa
         self.current_teleport_sprite = 0
-        self.rect.move_ip(self.direction * TELEPORT_DISTANCE)
-        self.last_teleport_frame = current_frame
-
+        new_position = self.rect.move(self.direction * TELEPORT_DISTANCE)
+        
+        # Check if the new position would be within the player bounds
+        if new_position.top > 100 and new_position.bottom < (screen_height - 100) and new_position.left > 100 and new_position.right < (screen_width - 100):
+            self.rect = new_position
+            self.last_teleport_frame = current_frame
+        else:
+            self.is_teleporting = False
 
 P1 = Player()
 
@@ -348,8 +358,11 @@ while game:
         if enemy.health > 0 and enemy.shoot_delay == 0:
             enemy.shoot(P1)
 
+
         if enemy.health <= 0:
             active_enemies.remove(enemy) 
+            score += 1
+
 
         if not active_enemies:
             enemy_count += 1
@@ -374,6 +387,8 @@ while game:
             enemy_count = 1
             spawn_new_enemies(enemy_count)
             bullets = []
+            
+            score = 0 
         else:
             pygame.quit()
             sys.exit()
@@ -390,9 +405,12 @@ while game:
             bullet.draw(screen)
     P1.draw(screen)
     P1.draw_health_hearts(screen)
-    for enemy in active_enemies:
+    score_text = font.render(f'Score: {score}', True, (255, 255, 255)) 
+    text_width = score_text.get_width()  # Get the width of the text
+    screen_width = screen.get_width()  # Get the width of the screen
+    screen.blit(score_text, ((screen_width - text_width) - 40, 20))  # Position the text at the top right corner
 
-    
+    for enemy in active_enemies:
         if enemy.health > 0:
             enemy.draw(screen) 
     pygame.display.update()
