@@ -160,25 +160,25 @@ class Player(pygame.sprite.Sprite):
 
     def update(self):
         pressed_keys = pygame.key.get_pressed()
-        if self.rect.top > 0:
+        if self.rect.top > 80:
             if pressed_keys[K_w]:
                 self.image = pygame.image.load("player_front.png")
                 self.rect = self.image.get_rect(topleft=self.rect.topleft)
                 self.rect.move_ip(0, -SPEED)
                 self.direction = pygame.math.Vector2(0, -1)  # Up
-        if self.rect.bottom < screen_height:    
+        if self.rect.bottom < (screen_height - 80):    
             if pressed_keys[K_s]:
                 self.image = pygame.image.load("player_front.png")
                 self.rect = self.image.get_rect(topleft=self.rect.topleft)
                 self.rect.move_ip(0, SPEED)
                 self.direction = pygame.math.Vector2(0, 1)  # Down
-        if self.rect.left > 0:
+        if self.rect.left > 90:
             if pressed_keys[K_a]:
                 self.image = pygame.image.load("player_left.png")
                 self.rect = self.image.get_rect(topleft=self.rect.topleft)
                 self.rect.move_ip(-SPEED, 0)
                 self.direction = pygame.math.Vector2(-1, 0)  # Left
-        if self.rect.right < screen_width:        
+        if self.rect.right < (screen_width - 80):        
             if pressed_keys[K_d]:
                 self.image = pygame.image.load("player_right_0000.png")
                 self.rect = self.image.get_rect(topleft=self.rect.topleft)
@@ -237,15 +237,15 @@ class Enemy:
             new_y = self.rect.y + self.speed * new_direction[1]
 
             
-            if 0 <= new_x <= screen_width - self.rect.width and 0 <= new_y <= screen_height - self.rect.height:
+            if 0 <= new_x <= (screen_width-80) - self.rect.width and 0 <= new_y <= (screen_height-80) - self.rect.height:
                 self.direction = new_direction   
 
         new_x = self.rect.x + self.speed * self.direction[0]
         new_y = self.rect.y + self.speed * self.direction[1]
 
-        if 0 <= new_x <= screen_width - self.rect.width:
+        if 0 <= new_x <= (screen_width-80) - self.rect.width:
                     self.rect.x = new_x
-        if 0 <= new_y <= screen_height - self.rect.height:
+        if 0 <= new_y <= (screen_height-80) - self.rect.height:
                     self.rect.y = new_y
 
         if self.shoot_delay > 0:
@@ -314,7 +314,7 @@ while game:
         
         for bullet in enemy.bullets:
             if P1.rect.colliderect(bullet.rect):
-                P1.health -= 0 
+                P1.health -= 20 
                 enemy.bullets.remove(bullet)  
                 print(P1.health)
 
