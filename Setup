@@ -5,6 +5,7 @@ import sys
 from tkinter import filedialog
 from tkinter import *
 
+
 pygame.init()
 
 #Variables
@@ -21,10 +22,12 @@ x = 50
 y = 50
 HEART_WIDTH = 30
 HEART_HEIGHT = 30
+TELEPORT_DISTANCE = 100
+TELEPORT_COOLDOWN = 60 * 5
 
 #screen information
-screen_width = 880
-screen_height = 700
+screen_width = 1320
+screen_height = 1050
 screen = pygame.display.set_mode((screen_width, screen_height),)
 pygame.display.set_caption("Game")
 
@@ -116,6 +119,7 @@ class Bullet:
         self.image = pygame.image.load(image)
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
+        self.remove = False
 
     def move(self):
         dir_norm = self.direction.normalize()
@@ -128,8 +132,8 @@ class Bullet:
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__() 
-        self.x = x
-        self.y = y
+        self.x = screen_width / 2
+        self.y = screen_height / 2
         self.image = pygame.image.load("player_front.png")
         self.is_animated = False
         self.sprite = []
@@ -147,16 +151,28 @@ class Player(pygame.sprite.Sprite):
         self.sprite.append(pygame.image.load("player_right_0011.png"))
         self.sprite.append(pygame.image.load("player_right_0012.png"))
         self.sprite.append(pygame.image.load("player_right_0013.png"))
-
+        self.teleport_sprites = []
+        self.teleport_sprites.append(pygame.image.load("teleport_0000.png"))
+        self.teleport_sprites.append(pygame.image.load("teleport_0001.png"))
+        self.current_teleport_sprite = 0
+        self.is_teleporting = False
         self.current_sprite = 0
         self.image = self.sprite[self.current_sprite]
         self.rect = self.image.get_rect()
         self.rect.center = (500, 250)
         self.direction = pygame.math.Vector2(0, -1)  
 
+        self.rect.width -= 20  # Adjust as needed
+        self.rect.height -= 20  # Adjust as needed
+        self.rect.center = (self.x, self.y)
+
         self.health = 80
         self.heart_image = pygame.image.load("heart.png")
         self.heart_image = pygame.transform.scale(self.heart_image, (HEART_WIDTH, HEART_HEIGHT))
+
+        self.last_teleport_frame = -TELEPORT_COOLDOWN  # Initialize to allow teleport at start
+        self.hitbox = pygame.Rect(self.x, self.y, self.rect.width - 0, self.rect.height - 0)
+        self.remove = False
 
     def update(self):
         pressed_keys = pygame.key.get_pressed()
@@ -185,36 +201,57 @@ class Player(pygame.sprite.Sprite):
                 self.rect.move_ip(SPEED, 0)
                 self.direction = pygame.math.Vector2(1, 0)  # Right
 
-        
         if pressed_keys[K_a] or pressed_keys[K_d] or pressed_keys[K_w] or pressed_keys[K_s]:
             self.current_sprite += 0.2
             if self.current_sprite >= len(self.sprite):
                 self.current_sprite = 0
             self.image = self.sprite[int(self.current_sprite)]
-
-             
+            
             if pressed_keys[K_a]:
                 self.image = pygame.transform.flip(self.image, True, False)
+        
+        if self.is_teleporting:
+            self.current_teleport_sprite += 0.2
+            if self.current_teleport_sprite >= len(self.teleport_sprites):
+                self.current_teleport_sprite = 0
+                self.is_teleporting = False  # End the teleportation animation
+            else:
+                self.image = self.teleport_sprites[int(self.current_teleport_sprite)]
+
+        self.hitbox.topleft = self.rect.topleft
 
     def draw(self, surface):
         surface.blit(self.image, self.rect)   
     
     #health bar
     def draw_health_hearts(self, surface):
-        for i in range(self.health // 20):  # Assuming each heart represents 10 health points
-            surface.blit(self.heart_image, (10 + i * HEART_WIDTH, 10))  # Draw a heart for each 10 health points
+        for i in range(self.health // 20):  
+            surface.blit(self.heart_image, (10 + i * HEART_WIDTH, 10)) 
+    
+    def can_teleport(self, current_frame):
+        # Check if enough frames have passed since the last teleport
+        return current_frame - self.last_teleport_frame >= TELEPORT_COOLDOWN
+
+    def teleport(self, current_frame):
+        self.is_teleporting = True
+        self.current_teleport_sprite = 0
+        self.rect.move_ip(self.direction * TELEPORT_DISTANCE)
+        self.last_teleport_frame = current_frame
+
 
 P1 = Player()
 
 #Enemy
 class Enemy:
     def __init__(self, x, y, speed, image):
+        x = random.randint(0, screen_width - 100)
+        y = random.randint(0, screen_height - 100)
         self.rect = pygame.Rect(x, y, 50, 50)  
         self.speed = speed
         self.image = pygame.image.load(image)
         self.image = pygame.transform.scale(self.image, (self.rect.width, self.rect.height)) 
         self.bullets = []
-        self.shoot_delay = 45
+        self.shoot_delay = 100
         self.direction = pygame.math.Vector2(1, 2)
         self.health = 100
 
@@ -224,9 +261,9 @@ class Enemy:
     def shoot(self, target):
         if self.shoot_delay <= 0:  
             dir_vector = vec(target.rect.centerx - self.rect.centerx, target.rect.centery - self.rect.centery)
-            bullet = Bullet(self.rect.centerx, self.rect.centery, 6, dir_vector, 'bullet.png') 
+            bullet = Bullet(self.rect.centerx, self.rect.centery, 5, dir_vector, 'bullet.png') 
             self.bullets.append(bullet)
-            self.shoot_delay = 45 
+            self.shoot_delay = 100
 
     def update(self):
         if random.randint(0, 50) == 1:  
@@ -264,6 +301,7 @@ def spawn_new_enemies(num_enemies):
 
 start_screen()
 spawn_new_enemies(enemy_count)
+current_frame = 0
 
 #game loop
 game = True
@@ -276,12 +314,17 @@ while game:
             if event.button == 1:
                 mouse_pos = pygame.mouse.get_pos()
                 dir_vector = vec(mouse_pos[0] - P1.rect.centerx, mouse_pos[1] - P1.rect.centery)
-                bullet = Bullet(P1.rect.centerx, P1.rect.centery, 6, dir_vector, 'bullet.png') 
+                bullet = Bullet(P1.rect.centerx, P1.rect.centery, 10, dir_vector, 'bullet.png') 
                 bullets.append(bullet)
                 shooting = True 
         elif event.type == MOUSEBUTTONUP:
             if event.button == 1:
-                shooting = False 
+                shooting = False
+        elif event.type == KEYDOWN:
+            if event.key == K_LSHIFT:
+                if P1.can_teleport(current_frame):
+                    P1.teleport(current_frame)
+    current_frame += 1
 
   
     for bullet in bullets:
@@ -290,9 +333,9 @@ while game:
     for bullet in bullets:
         bullet.draw(screen)
         for enemy in active_enemies:
-            if bullet.rect.colliderect(enemy.rect):  # Check if the bullet collides with the enemy
-                enemy.health -= 50  # Decrease the enemy's health
-                bullets.remove(bullet)  # Remove the bullet
+            if bullet.rect.colliderect(enemy.rect):  
+                enemy.health -= 50  
+                bullets.remove(bullet)  
     
     for enemy in active_enemies:
 
@@ -306,17 +349,22 @@ while game:
             enemy.shoot(P1)
 
         if enemy.health <= 0:
-            active_enemies.remove(enemy) # Removes enemy from active_enemies list when killed
+            active_enemies.remove(enemy) 
 
         if not active_enemies:
             enemy_count += 1
-            spawn_new_enemies(enemy_count) # Spawns new enemies when active_enemies list is empty
+            spawn_new_enemies(enemy_count) 
         
-        for bullet in enemy.bullets:
-            if P1.rect.colliderect(bullet.rect):
-                P1.health -= 20 
-                enemy.bullets.remove(bullet)  
-                print(P1.health)
+        for enemy in active_enemies:
+            for bullet in enemy.bullets:
+                if P1.hitbox.colliderect(bullet.rect):
+                    P1.health -= 20 
+                    bullet.remove = True
+                    print(P1.health)
+                    break
+        
+        for enemy in active_enemies:
+            enemy.bullets = [bullet for bullet in enemy.bullets if not bullet.remove]
 
     if P1.health <= 0:
         if game_over_screen():  
@@ -344,11 +392,9 @@ while game:
     P1.draw_health_hearts(screen)
     for enemy in active_enemies:
 
-        health_text = f"Enemy Health: {enemy.health}"
-        display_text(health_text, 10, 50)
     
         if enemy.health > 0:
-            enemy.draw(screen) # Enemy only gets drawn when alive
+            enemy.draw(screen) 
     pygame.display.update()
 
     FramePerSec.tick(FPS)
