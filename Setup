@@ -236,7 +236,7 @@ class Player(pygame.sprite.Sprite):
         return current_frame - self.last_teleport_frame >= TELEPORT_COOLDOWN
 
     def teleport(self, current_frame):
-        self.is_teleporting = Trueaaa
+        self.is_teleporting = True
         self.current_teleport_sprite = 0
         new_position = self.rect.move(self.direction * TELEPORT_DISTANCE)
         
@@ -246,6 +246,14 @@ class Player(pygame.sprite.Sprite):
             self.last_teleport_frame = current_frame
         else:
             self.is_teleporting = False
+def draw_cooldown_bar(screen, x, y, total_width, height, remaining_cooldown, max_cooldown, color):
+    # Calculate the width of the cooldown bar
+    bar_width = int(remaining_cooldown / max_cooldown * total_width)
+
+    # Draw the cooldown bar
+    pygame.draw.rect(screen, color, pygame.Rect(x, y, bar_width, height))
+cooldown_icon = pygame.image.load("cooldown_icon.png")
+cooldown_icon = pygame.transform.scale(cooldown_icon, (50, 50))  # Resize the icon to 50x50 pixels
 
 P1 = Player()
 
@@ -407,6 +415,12 @@ while game:
     text_width = score_text.get_width()  # Get the width of the text
     screen_width = screen.get_width()  # Get the width of the screen
     screen.blit(score_text, ((screen_width - text_width) - 40, 20))  # Position the text at the top right corner
+
+    # Draw the cooldown bar if the player cannot teleport
+    if not P1.can_teleport(current_frame):
+        remaining_cooldown = TELEPORT_COOLDOWN - (current_frame - P1.last_teleport_frame)
+        draw_cooldown_bar(screen, 80, 100, 150, 15, remaining_cooldown, TELEPORT_COOLDOWN, (80, 80, 255))
+        screen.blit(cooldown_icon, (20, 80))
 
     for enemy in active_enemies:
         if enemy.health > 0:
