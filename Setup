@@ -155,8 +155,8 @@ class Player(pygame.sprite.Sprite):
         self.sprite.append(pygame.image.load("player_right_0012.png"))
         self.sprite.append(pygame.image.load("player_right_0013.png"))
         self.teleport_sprites = []
-        self.teleport_sprites.append(pygame.image.load("teleport_0000.png"))
-        self.teleport_sprites.append(pygame.image.load("teleport_0001.png"))
+        self.teleport_sprites.append(pygame.image.load("player_right_0013.png")) # set back to teleport0000
+        self.teleport_sprites.append(pygame.image.load("player_right_0013.png")) # set back to teleport0001
         self.current_teleport_sprite = 0
         self.is_teleporting = False
         self.current_sprite = 0
@@ -252,7 +252,7 @@ def draw_cooldown_bar(screen, x, y, total_width, height, remaining_cooldown, max
 
     # Draw the cooldown bar
     pygame.draw.rect(screen, color, pygame.Rect(x, y, bar_width, height))
-cooldown_icon = pygame.image.load("cooldown_icon.png")
+cooldown_icon = pygame.image.load("player_right_0013.png") # Change back to cooldown_icon.png
 cooldown_icon = pygame.transform.scale(cooldown_icon, (50, 50))  # Resize the icon to 50x50 pixels
 
 P1 = Player()
@@ -270,6 +270,7 @@ class Enemy:
         self.shoot_delay = 100
         self.direction = pygame.math.Vector2(1, 2)
         self.health = 100
+        self.spawn_duration = 180  # 3 seconds at 60 FPS
 
     def draw(self, surface):
         surface.blit(self.image, self.rect)
@@ -282,6 +283,10 @@ class Enemy:
             self.shoot_delay = 100
 
     def update(self):
+        if self.spawn_duration > 0:
+            self.spawn_duration -= 1
+            return
+        
         if random.randint(0, 50) == 1:  
             new_direction = pygame.math.Vector2(random.uniform(-1, 1), random.uniform(-1, 1))
 
@@ -349,12 +354,11 @@ while game:
     for bullet in bullets:
         bullet.draw(screen)
         for enemy in active_enemies:
-            if bullet.rect.colliderect(enemy.rect):  
+            if bullet.rect.colliderect(enemy.rect) and enemy.spawn_duration <= 0:  
                 enemy.health -= 50  
                 bullets.remove(bullet)  
     
     for enemy in active_enemies:
-
         for bullet in enemy.bullets:
             bullet.move()
 
@@ -364,11 +368,9 @@ while game:
         if enemy.health > 0 and enemy.shoot_delay == 0:
             enemy.shoot(P1)
 
-
         if enemy.health <= 0:
-            active_enemies.remove(enemy) 
+            active_enemies.remove(enemy)
             score += 1
-
 
         if not active_enemies:
             enemy_count += 1
@@ -393,14 +395,12 @@ while game:
             enemy_count = 1
             spawn_new_enemies(enemy_count)
             bullets = []
-            
-            score = 0 
+            score = 0
         else:
             pygame.quit()
             sys.exit()
         
     P1.update()
-    enemy.update()  
 
     screen.fill(white)
     screen.blit(background, (0, 0))
