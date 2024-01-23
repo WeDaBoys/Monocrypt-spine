@@ -26,8 +26,8 @@ score = 0
 paused = False
 
 #screen information
-screen_width = 880
-screen_height = 700
+screen_width = 1056
+screen_height = 840
 screen = pygame.display.set_mode((screen_width, screen_height),)
 pygame.display.set_caption("Game")
 
@@ -75,6 +75,7 @@ def start_screen():
         screen.blit(title, title_rect)
         screen.blit(instructions, instructions_rect)
         pygame.display.flip()
+
 
 #game over
 def game_over_screen():
@@ -136,7 +137,7 @@ class Bullet:
     def draw(self, screen):
         screen.blit(self.image, self.rect)
 
-
+desired_size = (62, 107)
 #player
 class Player(pygame.sprite.Sprite):
     def __init__(self):
@@ -161,8 +162,17 @@ class Player(pygame.sprite.Sprite):
         self.sprite.append(pygame.image.load("player_right_0012.png"))
         self.sprite.append(pygame.image.load("player_right_0013.png"))
         self.teleport_sprites = []
-        self.teleport_sprites.append(pygame.image.load("player_right_0013.png")) # set back to teleport0000
-        self.teleport_sprites.append(pygame.image.load("player_right_0013.png")) # set back to teleport0001
+        self.teleport_sprites.append(pygame.image.load("player_dash_0000.png"))
+        self.teleport_sprites.append(pygame.image.load("player_dash_0001.png"))
+        self.teleport_sprites.append(pygame.image.load("player_dash_0002.png"))
+        self.teleport_sprites.append(pygame.image.load("player_dash_0003.png"))
+        self.teleport_sprites.append(pygame.image.load("player_dash_0004.png"))
+        self.teleport_sprites.append(pygame.image.load("player_dash_0005.png"))
+        self.teleport_sprites.append(pygame.image.load("player_dash_0006.png"))
+        self.teleport_sprites.append(pygame.image.load("player_dash_0007.png"))
+        self.teleport_sprites.append(pygame.image.load("player_dash_0008.png"))
+        self.teleport_sprites.append(pygame.image.load("player_dash_0009.png"))
+        self.teleport_sprites.append(pygame.image.load("player_dash_0010.png"))
         self.current_teleport_sprite = 0
         self.is_teleporting = False
         self.current_sprite = 0
@@ -226,6 +236,8 @@ class Player(pygame.sprite.Sprite):
                 self.is_teleporting = False  # End the teleportation animation
             else:
                 self.image = self.teleport_sprites[int(self.current_teleport_sprite)]
+                if self.direction.x < 0:  # Moving left
+                    self.image = pygame.transform.flip(self.image, True, False)
 
         self.hitbox.topleft = self.rect.topleft
 
@@ -284,7 +296,7 @@ class Enemy:
     def shoot(self, target):
         if self.shoot_delay <= 0:  
             dir_vector = vec(target.rect.centerx - self.rect.centerx, target.rect.centery - self.rect.centery)
-            bullet = Bullet(self.rect.centerx, self.rect.centery, 5, dir_vector, 'bullet.png') 
+            bullet = Bullet(self.rect.centerx, self.rect.centery, 5, dir_vector, 'enemy_bullet.png') 
             self.bullets.append(bullet)
             self.shoot_delay = 100
 
@@ -353,14 +365,14 @@ while game:
                     P1.teleport(current_frame)
             if event.key == K_ESCAPE:
                 paused = not paused
-
+   
     current_frame += 1
 
     if paused == True:
         display_text("Paused", screen_width // 2 - 50, screen_height // 2 - 50)
         pygame.display.flip()
         continue
-  
+
     bullet_buffer = []
 
     for bullet in bullets:
@@ -374,7 +386,7 @@ while game:
                 bullet_buffer.append(bullet)
                 break
     for bullet in bullet_buffer:
-        bullets.remove(bullet)
+        bullets.remove(bullet)  
     
     for enemy in active_enemies:
         for bullet in enemy.bullets:
