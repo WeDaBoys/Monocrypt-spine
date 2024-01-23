@@ -275,23 +275,70 @@ cooldown_icon = pygame.transform.scale(cooldown_icon, (50, 50))  # Resize the ic
 
 P1 = Player()
 
-#Enemy
 class Enemy:
     def __init__(self, x, y, speed, image):
         x = random.randint(0, screen_width - 100)
         y = random.randint(0, screen_height - 100)
         self.rect = pygame.Rect(x, y, 50, 50)  
         self.speed = speed
-        self.image = pygame.image.load(image)
+        self.original_image = pygame.image.load(image)  # Store the original image
+        self.image = pygame.transform.scale(self.original_image.copy(), (self.rect.width, self.rect.height))  # Scale the copied image
+        self.invulnerability_duration = 180  # Add this line if you don't have it already
+        self.spawn_duration = self.invulnerability_duration  # Tie spawn duration to invulnerability duration
         self.image = pygame.transform.scale(self.image, (self.rect.width, self.rect.height)) 
         self.bullets = []
         self.shoot_delay = 100
         self.direction = pygame.math.Vector2(1, 2)
         self.health = 100
         self.spawn_duration = 180  # 3 seconds at 60 FPS
+        self.spawn_images = []
+        self.spawn_images.append(pygame.image.load("spawn_0000.png"))
+        self.spawn_images.append(pygame.image.load("spawn_0001.png"))
+        self.spawn_images.append(pygame.image.load("spawn_0002.png"))
+        self.spawn_images.append(pygame.image.load("spawn_0003.png"))
+        self.spawn_images.append(pygame.image.load("spawn_0004.png"))
+        self.spawn_images.append(pygame.image.load("spawn_0005.png"))
+        self.spawn_images.append(pygame.image.load("spawn_0006.png"))
+        self.spawn_images.append(pygame.image.load("spawn_0007.png"))
+        self.spawn_images.append(pygame.image.load("spawn_0008.png"))
+        self.current_spawn_sprite = 0  # Add this line
+        self.spawn_sprite_increment = len(self.spawn_images) / self.spawn_duration  # Calculate the increment value
 
+    def update(self):  # Add this method
+        if self.spawn_duration > 0:
+            self.current_spawn_sprite += self.spawn_sprite_increment  # Use the calculated increment value
+            if self.current_spawn_sprite >= len(self.spawn_images):
+                self.current_spawn_sprite = 0
+            self.image = self.spawn_images[int(self.current_spawn_sprite)]
+            self.spawn_duration -= 1
+            if self.spawn_duration == 0:  # If the spawn animation is over
+                self.image = pygame.transform.scale(self.original_image.copy(), (self.rect.width, self.rect.height))  # Scale the copied image
+            return
+
+        if random.randint(0, 50) == 1:  
+            new_direction = pygame.math.Vector2(random.uniform(-1, 1), random.uniform(-1, 1))
+            new_x = self.rect.x + self.speed * new_direction[0]
+            new_y = self.rect.y + self.speed * new_direction[1]
+            if 0 <= new_x <= (screen_width-80) - self.rect.width and 0 <= new_y <= (screen_height-80) - self.rect.height:
+                self.direction = new_direction   
+
+        new_x = self.rect.x + self.speed * self.direction[0]
+        new_y = self.rect.y + self.speed * self.direction[1]
+        if 0 <= new_x <= (screen_width-80) - self.rect.width:
+            self.rect.x = new_x
+        if 0 <= new_y <= (screen_height-80) - self.rect.height:
+            self.rect.y = new_y
+
+        if self.shoot_delay > 0:
+            self.shoot_delay -= 1
     def draw(self, surface):
-        surface.blit(self.image, self.rect)
+        if self.spawn_duration > 0:
+            # Display spawn animation
+            image = pygame.transform.scale(self.image, (self.rect.width, self.rect.height))  # Change this line
+            surface.blit(image, self.rect)
+        else:
+            # Display regular enemy image
+            surface.blit(self.image, self.rect)
 
     def shoot(self, target):
         if self.shoot_delay <= 0:  
@@ -300,32 +347,6 @@ class Enemy:
             self.bullets.append(bullet)
             self.shoot_delay = 100
 
-    def update(self):
-        if self.spawn_duration > 0:
-            self.spawn_duration -= 1
-            return
-        
-        if random.randint(0, 50) == 1:  
-            new_direction = pygame.math.Vector2(random.uniform(-1, 1), random.uniform(-1, 1))
-
-            
-            new_x = self.rect.x + self.speed * new_direction[0]
-            new_y = self.rect.y + self.speed * new_direction[1]
-
-            
-            if 0 <= new_x <= (screen_width-80) - self.rect.width and 0 <= new_y <= (screen_height-80) - self.rect.height:
-                self.direction = new_direction   
-
-        new_x = self.rect.x + self.speed * self.direction[0]
-        new_y = self.rect.y + self.speed * self.direction[1]
-
-        if 0 <= new_x <= (screen_width-80) - self.rect.width:
-                    self.rect.x = new_x
-        if 0 <= new_y <= (screen_height-80) - self.rect.height:
-                    self.rect.y = new_y
-
-        if self.shoot_delay > 0:
-            self.shoot_delay -= 1
 
 active_enemies = []
 enemy = Enemy(100, 100, 2, 'enemy.png')
