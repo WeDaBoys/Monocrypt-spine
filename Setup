@@ -270,7 +270,7 @@ def draw_cooldown_bar(screen, x, y, total_width, height, remaining_cooldown, max
 
     # Draw the cooldown bar
     pygame.draw.rect(screen, color, pygame.Rect(x, y, bar_width, height))
-cooldown_icon = pygame.image.load("player_right_0013.png") # Change back to cooldown_icon.png
+cooldown_icon = pygame.image.load("cooldown_icon.png") # Change back to cooldown_icon.png
 cooldown_icon = pygame.transform.scale(cooldown_icon, (50, 50))  # Resize the icon to 50x50 pixels
 
 P1 = Player()
