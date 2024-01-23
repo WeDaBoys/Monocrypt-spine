@@ -23,10 +23,11 @@ HEART_HEIGHT = 70
 TELEPORT_DISTANCE = 100
 TELEPORT_COOLDOWN = 60 * 5
 score = 0
+paused = False
 
 #screen information
-screen_width = 1320
-screen_height = 1050
+screen_width = 880
+screen_height = 700
 screen = pygame.display.set_mode((screen_width, screen_height),)
 pygame.display.set_caption("Game")
 
@@ -75,7 +76,6 @@ def start_screen():
         screen.blit(instructions, instructions_rect)
         pygame.display.flip()
 
-
 #game over
 def game_over_screen():
     font = pygame.font.Font(None, 50)
@@ -109,6 +109,12 @@ def game_over_screen():
         screen.blit(quit_text, quit_text_rect)
         screen.blit(score_text, score_text_rect)  # Display the score text
         pygame.display.flip()
+
+# Pause Menu
+def display_text(text, x, y):
+    text_surface = font.render(text, True, text_color)
+    screen.blit(text_surface, (x, y))
+
 #bullets variables
 bullets = []
 shooting = False
@@ -345,9 +351,18 @@ while game:
             if event.key == K_LSHIFT:
                 if P1.can_teleport(current_frame):
                     P1.teleport(current_frame)
+            if event.key == K_ESCAPE:
+                paused = not paused
+
     current_frame += 1
 
+    if paused == True:
+        display_text("Paused", screen_width // 2 - 50, screen_height // 2 - 50)
+        pygame.display.flip()
+        continue
   
+    bullet_buffer = []
+
     for bullet in bullets:
         bullet.move()
     
@@ -356,7 +371,10 @@ while game:
         for enemy in active_enemies:
             if bullet.rect.colliderect(enemy.rect) and enemy.spawn_duration <= 0:  
                 enemy.health -= 50  
-                bullets.remove(bullet)  
+                bullet_buffer.append(bullet)
+                break
+    for bullet in bullet_buffer:
+        bullets.remove(bullet)
     
     for enemy in active_enemies:
         for bullet in enemy.bullets:
