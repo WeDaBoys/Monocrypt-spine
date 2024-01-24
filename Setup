@@ -112,9 +112,11 @@ def game_over_screen():
         pygame.display.flip()
 
 # Pause Menu
-def display_text(text, x, y):
-    text_surface = font.render(text, True, text_color)
-    screen.blit(text_surface, (x, y))
+def pause_menu():
+    paused_text = font.render(f'Paused', True, (255, 255, 255))
+    paused_rect = paused_text.get_rect(center=(screen_width/2, screen_height // 2 - 300))
+    screen.fill(black)
+    screen.blit(paused_text, paused_rect)
 
 #bullets variables
 bullets = []
@@ -138,7 +140,8 @@ class Bullet:
         screen.blit(self.image, self.rect)
 
 desired_size = (62, 107)
-#player
+
+# Player
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__() 
@@ -275,6 +278,7 @@ cooldown_icon = pygame.transform.scale(cooldown_icon, (50, 50))  # Resize the ic
 
 P1 = Player()
 
+# Enemy
 class Enemy:
     def __init__(self, x, y, speed, image):
         x = random.randint(0, screen_width - 100)
@@ -390,7 +394,7 @@ while game:
     current_frame += 1
 
     if paused == True:
-        display_text("Paused", screen_width // 2 - 50, screen_height // 2 - 50)
+        pause_menu()
         pygame.display.flip()
         continue
 
