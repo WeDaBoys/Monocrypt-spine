@@ -2,7 +2,7 @@ import pygame
 from pygame.locals import *
 import random
 import sys
-
+import math
 
 pygame.init()
 
@@ -147,7 +147,11 @@ class Player(pygame.sprite.Sprite):
         super().__init__() 
         self.x = screen_width / 2
         self.y = screen_height / 2
+        self.initial_position = pygame.math.Vector2(self.x, self.y)
         self.image = pygame.image.load("player_front.png")
+        self.image_front = pygame.image.load("player_front.png")
+        self.image_left = pygame.image.load("player_left.png")
+        self.image_right = pygame.image.load("player_right_0000.png")
         self.is_animated = False
         self.sprite = []
         self.sprite.append(pygame.image.load("player_right_0000.png"))
@@ -181,18 +185,18 @@ class Player(pygame.sprite.Sprite):
         self.current_sprite = 0
         self.image = self.sprite[self.current_sprite]
         self.rect = self.image.get_rect()
-        self.rect.center = (500, 250)
+        self.rect.center = (self.x, self.y)
         self.direction = pygame.math.Vector2(0, -1)  
 
-        self.rect.width -= 20  # Adjust as needed
-        self.rect.height -= 20  # Adjust as needed
+        self.rect.width -= 20  
+        self.rect.height -= 20  
         self.rect.center = (self.x, self.y)
 
         self.health = 80
         self.heart_image = pygame.image.load("heart.png")
         self.heart_image = pygame.transform.scale(self.heart_image, (HEART_WIDTH, HEART_HEIGHT))
 
-        self.last_teleport_frame = -TELEPORT_COOLDOWN  # Initialize to allow teleport at start
+        self.last_teleport_frame = -TELEPORT_COOLDOWN 
         self.hitbox = pygame.Rect(self.x, self.y, self.rect.width - 0, self.rect.height - 0)
         self.remove = False
 
@@ -200,26 +204,23 @@ class Player(pygame.sprite.Sprite):
         pressed_keys = pygame.key.get_pressed()
         if self.rect.top > 100:
             if pressed_keys[K_w]:
-                self.image = pygame.image.load("player_front.png")
-                self.rect = self.image.get_rect(topleft=self.rect.topleft)
-                self.rect.move_ip(0, -SPEED)
-                self.direction = pygame.math.Vector2(0, -1)  # Up
+                if pressed_keys[K_w]:
+                    self.image = self.image_front
+                    self.rect.move_ip(0, -SPEED)
+                    self.direction = pygame.math.Vector2(0, -1)  # Up
         if self.rect.bottom < (screen_height - 100):    
             if pressed_keys[K_s]:
-                self.image = pygame.image.load("player_front.png")
-                self.rect = self.image.get_rect(topleft=self.rect.topleft)
+                self.image = self.image_front
                 self.rect.move_ip(0, SPEED)
                 self.direction = pygame.math.Vector2(0, 1)  # Down
         if self.rect.left > 100:
             if pressed_keys[K_a]:
-                self.image = pygame.image.load("player_left.png")
-                self.rect = self.image.get_rect(topleft=self.rect.topleft)
+                self.image = self.image_left
                 self.rect.move_ip(-SPEED, 0)
                 self.direction = pygame.math.Vector2(-1, 0)  # Left
         if self.rect.right < (screen_width - 100):        
             if pressed_keys[K_d]:
-                self.image = pygame.image.load("player_right_0000.png")
-                self.rect = self.image.get_rect(topleft=self.rect.topleft)
+                self.image = self.image_right
                 self.rect.move_ip(SPEED, 0)
                 self.direction = pygame.math.Vector2(1, 0)  # Right
 
@@ -252,8 +253,9 @@ class Player(pygame.sprite.Sprite):
         for i in range(self.health // 20):  
             surface.blit(self.heart_image, (10 + i * HEART_WIDTH, 10)) 
     
+    #teleport
     def can_teleport(self, current_frame):
-        # Check if enough frames have passed since the last teleport
+        
         return current_frame - self.last_teleport_frame >= TELEPORT_COOLDOWN
 
     def teleport(self, current_frame):
@@ -261,7 +263,7 @@ class Player(pygame.sprite.Sprite):
         self.current_teleport_sprite = 0
         new_position = self.rect.move(self.direction * TELEPORT_DISTANCE)
         
-        # Check if the new position would be within the player bounds
+        
         if new_position.top > 100 and new_position.bottom < (screen_height - 100) and new_position.left > 100 and new_position.right < (screen_width - 100):
             self.rect = new_position
             self.last_teleport_frame = current_frame
@@ -273,8 +275,8 @@ def draw_cooldown_bar(screen, x, y, total_width, height, remaining_cooldown, max
 
     # Draw the cooldown bar
     pygame.draw.rect(screen, color, pygame.Rect(x, y, bar_width, height))
-cooldown_icon = pygame.image.load("cooldown_icon.png") # Change back to cooldown_icon.png
-cooldown_icon = pygame.transform.scale(cooldown_icon, (50, 50))  # Resize the icon to 50x50 pixels
+cooldown_icon = pygame.image.load("cooldown_icon.png") 
+cooldown_icon = pygame.transform.scale(cooldown_icon, (50, 50))  
 
 P1 = Player()
 
@@ -285,16 +287,16 @@ class Enemy:
         y = random.randint(0, screen_height - 100)
         self.rect = pygame.Rect(x, y, 50, 50)  
         self.speed = speed
-        self.original_image = pygame.image.load(image)  # Store the original image
-        self.image = pygame.transform.scale(self.original_image.copy(), (self.rect.width, self.rect.height))  # Scale the copied image
-        self.invulnerability_duration = 180  # Add this line if you don't have it already
-        self.spawn_duration = self.invulnerability_duration  # Tie spawn duration to invulnerability duration
+        self.original_image = pygame.image.load(image)  
+        self.image = pygame.transform.scale(self.original_image.copy(), (self.rect.width, self.rect.height))  
+        self.invulnerability_duration = 180  
+        self.spawn_duration = self.invulnerability_duration  
         self.image = pygame.transform.scale(self.image, (self.rect.width, self.rect.height)) 
         self.bullets = []
         self.shoot_delay = 100
         self.direction = pygame.math.Vector2(1, 2)
         self.health = 100
-        self.spawn_duration = 180  # 3 seconds at 60 FPS
+        self.spawn_duration = 180 
         self.spawn_images = []
         self.spawn_images.append(pygame.image.load("spawn_0000.png"))
         self.spawn_images.append(pygame.image.load("spawn_0001.png"))
@@ -305,18 +307,42 @@ class Enemy:
         self.spawn_images.append(pygame.image.load("spawn_0006.png"))
         self.spawn_images.append(pygame.image.load("spawn_0007.png"))
         self.spawn_images.append(pygame.image.load("spawn_0008.png"))
-        self.current_spawn_sprite = 0  # Add this line
-        self.spawn_sprite_increment = len(self.spawn_images) / self.spawn_duration  # Calculate the increment value
+        self.current_spawn_sprite = 0  
+        self.spawn_sprite_increment = len(self.spawn_images) / self.spawn_duration  
+        self.is_dead = False
+        self.death_sprites = []
+        self.death_sprites.append(pygame.image.load("enemy_death_0000.png"))
+        self.death_sprites.append(pygame.image.load("enemy_death_0001.png"))
+        self.death_sprites.append(pygame.image.load("enemy_death_0002.png"))
+        self.death_sprites.append(pygame.image.load("enemy_death_0003.png"))
+        self.death_sprites.append(pygame.image.load("enemy_death_0004.png"))
+        self.death_sprites.append(pygame.image.load("enemy_death_0005.png"))
+        self.death_sprites.append(pygame.image.load("enemy_death_0006.png"))
+        self.death_sprites.append(pygame.image.load("enemy_death_0007.png"))
+        self.death_sprites.append(pygame.image.load("enemy_death_0008.png"))
+        self.current_death_sprite = 0
 
-    def update(self):  # Add this method
+    def die(self):
+        self.is_dead = True
+        self.current_death_sprite = 0
+        death_image = self.death_sprites[0]
+        self.rect = death_image.get_rect(center=self.rect.center)
+
+    def update(self):  
         if self.spawn_duration > 0:
-            self.current_spawn_sprite += self.spawn_sprite_increment  # Use the calculated increment value
+            self.current_spawn_sprite += self.spawn_sprite_increment  
             if self.current_spawn_sprite >= len(self.spawn_images):
                 self.current_spawn_sprite = 0
             self.image = self.spawn_images[int(self.current_spawn_sprite)]
             self.spawn_duration -= 1
-            if self.spawn_duration == 0:  # If the spawn animation is over
-                self.image = pygame.transform.scale(self.original_image.copy(), (self.rect.width, self.rect.height))  # Scale the copied image
+            if self.spawn_duration == 0:  
+                self.image = pygame.transform.scale(self.original_image.copy(), (self.rect.width, self.rect.height)) 
+            return
+        if self.is_dead:
+            self.current_death_sprite += 0.2
+            if self.current_death_sprite >= len(self.death_sprites):
+                self.current_death_sprite = 0
+                active_enemies.remove(self)  
             return
 
         if random.randint(0, 50) == 1:  
@@ -336,13 +362,18 @@ class Enemy:
         if self.shoot_delay > 0:
             self.shoot_delay -= 1
     def draw(self, surface):
+        if self.is_dead:
+            self.image = self.death_sprites[int(self.current_death_sprite)]
+            death_image = pygame.transform.scale(self.image, (self.rect.width, self.rect.height))
+            self.rect = death_image.get_rect(center=self.rect.center)
         if self.spawn_duration > 0:
             # Display spawn animation
-            image = pygame.transform.scale(self.image, (self.rect.width, self.rect.height))  # Change this line
+            image = pygame.transform.scale(self.image, (self.rect.width, self.rect.height))  
             surface.blit(image, self.rect)
         else:
             # Display regular enemy image
             surface.blit(self.image, self.rect)
+        
 
     def shoot(self, target):
         if self.shoot_delay <= 0:  
@@ -366,6 +397,17 @@ def spawn_new_enemies(num_enemies):
 start_screen()
 spawn_new_enemies(enemy_count)
 current_frame = 0
+
+#arrow code
+arrow_image = pygame.image.load('arrow.png')
+initial_angle = 0 
+arrow_image = pygame.transform.rotate(arrow_image, initial_angle)
+arrow_width = 25  
+arrow_height = 25 
+arrow_image = pygame.transform.scale(arrow_image, (arrow_width, arrow_height))
+arrow_offset_x = 0 
+arrow_offset_y = 0
+
 
 #game loop
 game = True
@@ -409,10 +451,32 @@ while game:
             if bullet.rect.colliderect(enemy.rect) and enemy.spawn_duration <= 0:  
                 enemy.health -= 50  
                 bullet_buffer.append(bullet)
+                if enemy.health <= 0 and not enemy.is_dead:
+                    enemy.die() 
                 break
     for bullet in bullet_buffer:
         bullets.remove(bullet)  
+
+
+    mouse_pos = pygame.mouse.get_pos()
+    rel_x, rel_y = mouse_pos[0] - P1.rect.centerx, mouse_pos[1] - P1.rect.centery
+    angle = (180 / math.pi) * -math.atan2(rel_y, rel_x)
+
+
+    arrow_image_rotated = pygame.transform.rotate(arrow_image, angle)
+
     
+    radius = 65 
+    arrow_pos = (P1.rect.centerx + radius * math.cos(math.radians(-angle)), P1.rect.centery + radius * math.sin(math.radians(-angle)))
+
+    
+    arrow_rect = arrow_image_rotated.get_rect(center=arrow_pos)
+
+
+
+
+
+
     for enemy in active_enemies:
         for bullet in enemy.bullets:
             bullet.move()
@@ -420,12 +484,12 @@ while game:
         enemy.update()
         enemy.draw(screen)
 
-        if enemy.health > 0 and enemy.shoot_delay == 0:
+        if enemy.health > 0 and enemy.shoot_delay == 0 and not enemy.is_dead:
             enemy.shoot(P1)
 
-        if enemy.health <= 0:
-            active_enemies.remove(enemy)
-            score += 1
+        if not active_enemies:
+            enemy_count += 1
+            spawn_new_enemies(enemy_count)
 
         if not active_enemies:
             enemy_count += 1
@@ -466,19 +530,21 @@ while game:
             bullet.draw(screen)
     P1.draw(screen)
     P1.draw_health_hearts(screen)
+    
+    screen.blit(arrow_image_rotated, arrow_rect.topleft) 
     score_text = font.render(f'Score: {score}', True, (255, 255, 255)) 
-    text_width = score_text.get_width()  # Get the width of the text
-    screen_width = screen.get_width()  # Get the width of the screen
-    screen.blit(score_text, ((screen_width - text_width) - 40, 20))  # Position the text at the top right corner
+    text_width = score_text.get_width()  
+    screen_width = screen.get_width() 
+    screen.blit(score_text, ((screen_width - text_width) - 40, 20)) 
 
-    # Draw the cooldown bar if the player cannot teleport
+
     if not P1.can_teleport(current_frame):
         remaining_cooldown = TELEPORT_COOLDOWN - (current_frame - P1.last_teleport_frame)
         draw_cooldown_bar(screen, 80, 100, 150, 15, remaining_cooldown, TELEPORT_COOLDOWN, (80, 80, 255))
         screen.blit(cooldown_icon, (20, 80))
 
     for enemy in active_enemies:
-        if enemy.health > 0:
+        if enemy.health > 0 or enemy.is_dead:  
             enemy.draw(screen) 
     pygame.display.update()
 
