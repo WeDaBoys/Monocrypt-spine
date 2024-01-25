@@ -169,17 +169,12 @@ class Player(pygame.sprite.Sprite):
         self.sprite.append(pygame.image.load("player_right_0012.png"))
         self.sprite.append(pygame.image.load("player_right_0013.png"))
         self.teleport_sprites = []
-        self.teleport_sprites.append(pygame.image.load("player_dash_0000.png"))
         self.teleport_sprites.append(pygame.image.load("player_dash_0001.png"))
         self.teleport_sprites.append(pygame.image.load("player_dash_0002.png"))
         self.teleport_sprites.append(pygame.image.load("player_dash_0003.png"))
         self.teleport_sprites.append(pygame.image.load("player_dash_0004.png"))
-        self.teleport_sprites.append(pygame.image.load("player_dash_0005.png"))
         self.teleport_sprites.append(pygame.image.load("player_dash_0006.png"))
-        self.teleport_sprites.append(pygame.image.load("player_dash_0007.png"))
         self.teleport_sprites.append(pygame.image.load("player_dash_0008.png"))
-        self.teleport_sprites.append(pygame.image.load("player_dash_0009.png"))
-        self.teleport_sprites.append(pygame.image.load("player_dash_0010.png"))
         self.current_teleport_sprite = 0
         self.is_teleporting = False
         self.current_sprite = 0
@@ -466,7 +461,7 @@ while game:
     arrow_image_rotated = pygame.transform.rotate(arrow_image, angle)
 
     
-    radius = 65 
+    radius = 90 
     arrow_pos = (P1.rect.centerx + radius * math.cos(math.radians(-angle)), P1.rect.centery + radius * math.sin(math.radians(-angle)))
 
     
