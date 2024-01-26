@@ -13,8 +13,12 @@ enemy_hurt_sound = pygame.mixer.Sound('enemy hit.wav')
 space_start_sound = pygame.mixer.Sound('start space bar.wav')
 player_death_sound = pygame.mixer.Sound('death sound.wav')
 retry_sound = pygame.mixer.Sound('retry.wav')
+player_shot_sound = pygame.mixer.Sound('player_shot.mp3')
+enemy_spawn_sound = pygame.mixer.Sound('enemy spawn.mp3')
 enemy_hurt_sound.set_volume(0.2)
 player_hurt_sound.set_volume(0.2)
+player_shot_sound.set_volume(0.2)
+enemy_spawn_sound.set_volume(0.15)
 #Variables
 FPS = 60
 FramePerSec = pygame.time.Clock()
@@ -38,7 +42,7 @@ paused = False
 screen_width = 1056
 screen_height = 840
 screen = pygame.display.set_mode((screen_width, screen_height),)
-pygame.display.set_caption("Game")
+pygame.display.set_caption("MonoCrypt")
 
 #background
 background = pygame.image.load("background.jpg")
@@ -80,6 +84,17 @@ def start_screen():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     space_start_sound.play()
+
+                    # Animation
+                    for i in range(3):  
+                        screen.fill((0, 0, 0))  
+                        pygame.display.flip()
+                        pygame.time.delay(150)  
+
+                        screen.blit(title, (0, 0))
+                        pygame.display.flip()
+                        pygame.time.delay(150)  
+
                     return  
 
         screen.blit(title, (0,0))
@@ -95,17 +110,6 @@ def game_over_screen(score):
     score_text_rect = score_text.get_rect(center=(screen_width/2, screen_height/2 + 80)) 
 
     while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_r:  
-                    retry_sound.play()
-                    return True  
-                elif event.key == pygame.K_q:  
-                    return False  
-                
         screen.fill(black)
         screen.blit(end_screen, (0,50))
         screen.blit(score_text, score_text_rect) 
@@ -118,6 +122,35 @@ def game_over_screen(score):
 
         pygame.display.flip()
 
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:  
+                    retry_sound.play()
+
+                    # Animation
+                    for i in range(3):  
+                        screen.fill((0, 0, 0)) 
+                        pygame.display.flip()
+                        pygame.time.delay(150) 
+
+                        screen.blit(end_screen, (0, 50)) 
+                        screen.blit(score_text, score_text_rect) 
+
+                        for i, high_score in enumerate(high_scores[:3]):  
+                            high_score_text_str = f'{i+1}. High Score : {str(high_score).rjust(3, " ")}' 
+                            high_score_text = font.render(high_score_text_str, True, (255, 255, 255))  
+                            high_score_text_rect = high_score_text.get_rect(center=(screen_width/2, screen_height/2 + 150 + i*50))
+                            screen.blit(high_score_text, high_score_text_rect) 
+
+                        pygame.display.flip()
+                        pygame.time.delay(150)  
+
+                    return True  
+                elif event.key == pygame.K_q:  
+                    return False  
 
 # Pause Menu
 def pause_menu():
@@ -331,6 +364,7 @@ class Enemy:
         self.death_sprites.append(pygame.image.load("enemy_death_0007.png"))
         self.death_sprites.append(pygame.image.load("enemy_death_0008.png"))
         self.current_death_sprite = 0
+        self.sound_played = False
 
     def die(self):
         self.is_dead = True
@@ -396,6 +430,9 @@ enemy = Enemy(100, 100, 2, 'enemy.png')
 enemy_count = 1
 
 def spawn_new_enemies(num_enemies):
+    if enemy_spawn_sound.get_num_channels() == 0:
+        enemy_spawn_sound.play()
+
     for _ in range(num_enemies):
         new_enemy = Enemy(random.randint(0, screen_width - 50), random.randint(0, screen_height - 50), 2, 'enemy.png')
         active_enemies.append(new_enemy)
@@ -426,6 +463,7 @@ while game:
             sys.exit()
         elif event.type == MOUSEBUTTONDOWN:
             if event.button == 1:
+                player_shot_sound.play()
                 mouse_pos = pygame.mouse.get_pos()
                 dir_vector = vec(mouse_pos[0] - P1.rect.centerx, mouse_pos[1] - P1.rect.centery)
                 bullet = Bullet(P1.rect.centerx, P1.rect.centery, 10, dir_vector, 'bullet.png') 
@@ -439,10 +477,8 @@ while game:
                 if P1.can_teleport(current_frame):
                     P1.teleport(current_frame)
             if event.key == K_ESCAPE:
-                paused = not paused
-   
+                paused = not paused 
     current_frame += 1
-
     if paused == True:
         pause_menu()
         pygame.display.flip()
@@ -466,26 +502,13 @@ while game:
                 break
     for bullet in bullet_buffer:
         bullets.remove(bullet)  
-
-
     mouse_pos = pygame.mouse.get_pos()
     rel_x, rel_y = mouse_pos[0] - P1.rect.centerx, mouse_pos[1] - P1.rect.centery
     angle = (180 / math.pi) * -math.atan2(rel_y, rel_x)
-
-
     arrow_image_rotated = pygame.transform.rotate(arrow_image, angle)
-
-    
     radius = 65 
     arrow_pos = (P1.rect.centerx + radius * math.cos(math.radians(-angle)), P1.rect.centery + radius * math.sin(math.radians(-angle)))
-
-    
     arrow_rect = arrow_image_rotated.get_rect(center=arrow_pos)
-
-
-
-
-
 
     for enemy in active_enemies:
         for bullet in enemy.bullets:
