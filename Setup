@@ -12,6 +12,7 @@ player_hurt_sound = pygame.mixer.Sound('player hit.wav')
 enemy_hurt_sound = pygame.mixer.Sound('enemy hit.wav')
 space_start_sound = pygame.mixer.Sound('start space bar.wav')
 player_death_sound = pygame.mixer.Sound('death sound.wav')
+retry_sound = pygame.mixer.Sound('retry.wav')
 enemy_hurt_sound.set_volume(0.2)
 player_hurt_sound.set_volume(0.2)
 #Variables
@@ -100,6 +101,7 @@ def game_over_screen(score):
                 sys.exit()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:  
+                    retry_sound.play()
                     return True  
                 elif event.key == pygame.K_q:  
                     return False  
