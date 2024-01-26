@@ -97,6 +97,7 @@ def game_over_screen():
 def pause_menu():
     paused_screen = pygame.image.load("paused.png")
     paused_screen = pygame.transform.scale(paused_screen, (screen_width,screen_height))
+    screen.fill(black)
     screen.blit(paused_screen, (0,0))
 
 #bullets variables
@@ -294,15 +295,11 @@ class Enemy:
         self.spawn_sprite_increment = len(self.spawn_images) / self.spawn_duration  
         self.is_dead = False
         self.death_sprites = []
-        self.death_sprites.append(pygame.image.load("enemy_death_0000.png"))
-        self.death_sprites.append(pygame.image.load("enemy_death_0001.png"))
-        self.death_sprites.append(pygame.image.load("enemy_death_0002.png"))
-        self.death_sprites.append(pygame.image.load("enemy_death_0003.png"))
-        self.death_sprites.append(pygame.image.load("enemy_death_0004.png"))
-        self.death_sprites.append(pygame.image.load("enemy_death_0005.png"))
-        self.death_sprites.append(pygame.image.load("enemy_death_0006.png"))
-        self.death_sprites.append(pygame.image.load("enemy_death_0007.png"))
-        self.death_sprites.append(pygame.image.load("enemy_death_0008.png"))
+        self.teleport_sprites.append(pygame.image.load("player_dash_0001.png"))
+        self.teleport_sprites.append(pygame.image.load("player_dash_0002.png"))
+        self.teleport_sprites.append(pygame.image.load("player_dash_0003.png"))
+        self.teleport_sprites.append(pygame.image.load("player_dash_0004.png"))
+        self.teleport_sprites.append(pygame.image.load("player_dash_0006.png"))
         self.current_death_sprite = 0
 
     def die(self):
