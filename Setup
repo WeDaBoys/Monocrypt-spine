@@ -6,6 +6,14 @@ import math
 
 pygame.init()
 
+#sound
+pygame.mixer.init()
+player_hurt_sound = pygame.mixer.Sound('player hit.wav')
+enemy_hurt_sound = pygame.mixer.Sound('enemy hit.wav')
+space_start_sound = pygame.mixer.Sound('start space bar.wav')
+player_death_sound = pygame.mixer.Sound('death sound.wav')
+enemy_hurt_sound.set_volume(0.2)
+player_hurt_sound.set_volume(0.2)
 #Variables
 FPS = 60
 FramePerSec = pygame.time.Clock()
@@ -69,7 +77,8 @@ def start_screen():
                 pygame.quit()
                 sys.exit()
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:  
+                if event.key == pygame.K_SPACE:
+                    space_start_sound.play()
                     return  
 
         screen.blit(title, (0,0))
@@ -77,8 +86,7 @@ def start_screen():
 
 
 #game over
-def game_over_screen():
-    global score
+def game_over_screen(score):
     end_screen = pygame.image.load("end screen.png")
     end_screen = pygame.transform.scale(end_screen, (screen_width,screen_height))
 
@@ -405,6 +413,8 @@ arrow_offset_x = 0
 arrow_offset_y = 0
 
 
+
+
 #game loop
 game = True
 while game:
@@ -444,8 +454,9 @@ while game:
     for bullet in bullets:
         bullet.draw(screen)
         for enemy in active_enemies:
-            if bullet.rect.colliderect(enemy.rect) and enemy.spawn_duration <= 0:  
+            if bullet.rect.colliderect(enemy.rect) and enemy.spawn_duration <= 0 and not enemy.is_dead:  
                 enemy.health -= 50  
+                enemy_hurt_sound.play()  # Play the enemy hurt sound effect
                 bullet_buffer.append(bullet)
                 if enemy.health <= 0 and not enemy.is_dead:
                     enemy.die() 
@@ -496,6 +507,7 @@ while game:
             for bullet in enemy.bullets:
                 if P1.hitbox.colliderect(bullet.rect) and not P1.invincible:
                     P1.health -= 20 
+                    player_hurt_sound.play()
                     bullet.remove = True
                     print(P1.health)
                     break
@@ -504,12 +516,13 @@ while game:
             enemy.bullets = [bullet for bullet in enemy.bullets if not bullet.remove]
 
     if P1.health <= 0:
+        player_death_sound.play()
         high_scores.append(score)
         high_scores.sort(reverse=True)
         with open('high_scores.txt', 'w') as f:
-            for score in high_scores:
-                f.write(str(score) + '\n')
-        if game_over_screen():  
+            for high_score in high_scores:
+                f.write(str(high_score) + '\n')
+        if game_over_screen(score):  
             P1 = Player()
             active_enemies.clear()
             enemy = Enemy(100, 100, 2, 'enemy.png')
