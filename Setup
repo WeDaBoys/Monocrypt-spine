@@ -56,7 +56,6 @@ def start_screen():
     title = pygame.image.load("title screen.png")
     title = pygame.transform.scale(title,(screen_width,screen_height))
 
-
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -75,7 +74,6 @@ def game_over_screen():
     end_screen = pygame.image.load("end screen.png")
     end_screen = pygame.transform.scale(end_screen, (screen_width,screen_height))
 
-
     score_text = font.render(f'Your score is: {score}', True, (255, 255, 255))
     score_text_rect = score_text.get_rect(center=(screen_width/2, screen_height/2 + 150))  # Center the score text
 
@@ -89,9 +87,9 @@ def game_over_screen():
                     return True  
                 elif event.key == pygame.K_q:  
                     return False  
-
+                
         screen.fill(black)
-        screen.blit(end_screen, (0,0))
+        screen.blit(end_screen, (0,20))
         screen.blit(score_text, score_text_rect)  # Display the score text
         pygame.display.flip()
 
@@ -99,7 +97,6 @@ def game_over_screen():
 def pause_menu():
     paused_screen = pygame.image.load("paused.png")
     paused_screen = pygame.transform.scale(paused_screen, (screen_width,screen_height))
-    screen.fill(black)
     screen.blit(paused_screen, (0,0))
 
 #bullets variables
@@ -109,7 +106,7 @@ shooting = False
 class Bullet:
     def __init__(self, x, y, speed, direction, image):
         self.x = x
-        self.y = y 
+        self.y = y
         self.speed = speed
         self.direction = direction
         self.image = pygame.image.load(image)
@@ -152,11 +149,16 @@ class Player(pygame.sprite.Sprite):
         self.sprite.append(pygame.image.load("player_right_0012.png"))
         self.sprite.append(pygame.image.load("player_right_0013.png"))
         self.teleport_sprites = []
+        self.teleport_sprites.append(pygame.image.load("player_dash_0000.png"))
         self.teleport_sprites.append(pygame.image.load("player_dash_0001.png"))
         self.teleport_sprites.append(pygame.image.load("player_dash_0002.png"))
         self.teleport_sprites.append(pygame.image.load("player_dash_0003.png"))
         self.teleport_sprites.append(pygame.image.load("player_dash_0004.png"))
+        self.teleport_sprites.append(pygame.image.load("player_dash_0005.png"))
         self.teleport_sprites.append(pygame.image.load("player_dash_0006.png"))
+        self.teleport_sprites.append(pygame.image.load("player_dash_0007.png"))
+        self.teleport_sprites.append(pygame.image.load("player_dash_0009.png"))
+        self.teleport_sprites.append(pygame.image.load("player_dash_0010.png"))
         self.current_teleport_sprite = 0
         self.is_teleporting = False
         self.current_sprite = 0
@@ -176,6 +178,7 @@ class Player(pygame.sprite.Sprite):
         self.last_teleport_frame = -TELEPORT_COOLDOWN 
         self.hitbox = pygame.Rect(self.x, self.y, self.rect.width - 0, self.rect.height - 0)
         self.remove = False
+        self.invincible = False
 
     def update(self):
         pressed_keys = pygame.key.get_pressed()
@@ -214,10 +217,11 @@ class Player(pygame.sprite.Sprite):
             self.current_teleport_sprite += 0.2
             if self.current_teleport_sprite >= len(self.teleport_sprites):
                 self.current_teleport_sprite = 0
-                self.is_teleporting = False  # End the teleportation animation
+                self.is_teleporting = False  
+                self.invincible = False  
             else:
                 self.image = self.teleport_sprites[int(self.current_teleport_sprite)]
-                if self.direction.x < 0:  # Moving left
+                if self.direction.x < 0:  
                     self.image = pygame.transform.flip(self.image, True, False)
 
         self.hitbox.topleft = self.rect.topleft
@@ -237,6 +241,7 @@ class Player(pygame.sprite.Sprite):
 
     def teleport(self, current_frame):
         self.is_teleporting = True
+        self.invincible = True
         self.current_teleport_sprite = 0
         new_position = self.rect.move(self.direction * TELEPORT_DISTANCE)
         
@@ -246,6 +251,7 @@ class Player(pygame.sprite.Sprite):
             self.last_teleport_frame = current_frame
         else:
             self.is_teleporting = False
+            self.invincible = False 
 def draw_cooldown_bar(screen, x, y, total_width, height, remaining_cooldown, max_cooldown, color):
     # Calculate the width of the cooldown bar
     bar_width = int(remaining_cooldown / max_cooldown * total_width)
@@ -302,8 +308,6 @@ class Enemy:
     def die(self):
         self.is_dead = True
         self.current_death_sprite = 0
-        death_image = self.death_sprites[0]
-        self.rect = death_image.get_rect(center=self.rect.center)
 
     def update(self):  
         if self.spawn_duration > 0:
@@ -342,15 +346,13 @@ class Enemy:
         if self.is_dead:
             self.image = self.death_sprites[int(self.current_death_sprite)]
             death_image = pygame.transform.scale(self.image, (self.rect.width, self.rect.height))
-            self.rect = death_image.get_rect(center=self.rect.center)
-        if self.spawn_duration > 0:
-            # Display spawn animation
+            surface.blit(death_image, self.rect)
+        elif self.spawn_duration > 0:
             image = pygame.transform.scale(self.image, (self.rect.width, self.rect.height))  
             surface.blit(image, self.rect)
         else:
-            # Display regular enemy image
             surface.blit(self.image, self.rect)
-        
+            
 
     def shoot(self, target):
         if self.shoot_delay <= 0:  
@@ -429,8 +431,8 @@ while game:
                 enemy.health -= 50  
                 bullet_buffer.append(bullet)
                 if enemy.health <= 0 and not enemy.is_dead:
-                    enemy.die()
-                    score +=1
+                    enemy.die() 
+                    score += 1  # Increment the score when an enemy dies
                 break
     for bullet in bullet_buffer:
         bullets.remove(bullet)  
@@ -444,7 +446,7 @@ while game:
     arrow_image_rotated = pygame.transform.rotate(arrow_image, angle)
 
     
-    radius = 90 
+    radius = 65 
     arrow_pos = (P1.rect.centerx + radius * math.cos(math.radians(-angle)), P1.rect.centery + radius * math.sin(math.radians(-angle)))
 
     
@@ -475,7 +477,7 @@ while game:
         
         for enemy in active_enemies:
             for bullet in enemy.bullets:
-                if P1.hitbox.colliderect(bullet.rect):
+                if P1.hitbox.colliderect(bullet.rect) and not P1.invincible:
                     P1.health -= 20 
                     bullet.remove = True
                     print(P1.health)
