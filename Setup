@@ -99,6 +99,7 @@ def game_over_screen():
 def pause_menu():
     paused_screen = pygame.image.load("paused.png")
     paused_screen = pygame.transform.scale(paused_screen, (screen_width,screen_height))
+    screen.fill(black)
     screen.blit(paused_screen, (0,0))
 
 #bullets variables
