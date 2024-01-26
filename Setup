@@ -53,14 +53,9 @@ def display_text(text, x, y):
 
 #start
 def start_screen():
-    title_font = pygame.font.Font(None, 90) 
-    instructions_font = pygame.font.Font(None, 50) 
+    title = pygame.image.load("title screen.png")
+    title = pygame.transform.scale(title,(screen_width,screen_height))
 
-    title = title_font.render("MONOCRYPT", True, (255, 255, 255))
-    title_rect = title.get_rect(center=(screen_width/2, screen_height/2))
-
-    instructions = instructions_font.render("Press SPACE to Start", True, (255, 255, 255))
-    instructions_rect = instructions.get_rect(center=(screen_width/2, screen_height/2 + 50))
 
     while True:
         for event in pygame.event.get():
@@ -71,24 +66,15 @@ def start_screen():
                 if event.key == pygame.K_SPACE:  
                     return  
 
-        screen.fill(black)
-        screen.blit(title, title_rect)
-        screen.blit(instructions, instructions_rect)
+        screen.blit(title, (0,0))
         pygame.display.flip()
 
 
 #game over
 def game_over_screen():
-    font = pygame.font.Font(None, 50)
-    text = font.render("You Died", True, (255, 0, 0))
-    text_rect = text.get_rect(center=(screen_width/2, screen_height/2 -150))
+    end_screen = pygame.image.load("end screen.png")
+    end_screen = pygame.transform.scale(end_screen, (screen_width,screen_height))
 
-    retry_text = font.render("Press R to Retry", True, (255, 255, 255))
-    retry_text_rect = retry_text.get_rect(center=(screen_width/2, screen_height/2 + 0))
-
-    quit_text = font.render("Press Q to Quit", True, (255, 255, 255))
-    quit_text_rect = quit_text.get_rect(center=(screen_width/2, screen_height/2 + 70))
-    global score
 
     score_text = font.render(f'Your score is: {score}', True, (255, 255, 255))
     score_text_rect = score_text.get_rect(center=(screen_width/2, screen_height/2 + 150))  # Center the score text
@@ -105,18 +91,15 @@ def game_over_screen():
                     return False  
 
         screen.fill(black)
-        screen.blit(text, text_rect)
-        screen.blit(retry_text, retry_text_rect)
-        screen.blit(quit_text, quit_text_rect)
+        screen.blit(end_screen, (0,0))
         screen.blit(score_text, score_text_rect)  # Display the score text
         pygame.display.flip()
 
 # Pause Menu
 def pause_menu():
-    paused_text = font.render(f'Paused', True, (255, 255, 255))
-    paused_rect = paused_text.get_rect(center=(screen_width/2, screen_height // 2 - 300))
-    screen.fill(black)
-    screen.blit(paused_text, paused_rect)
+    paused_screen = pygame.image.load("paused.png")
+    paused_screen = pygame.transform.scale(paused_screen, (screen_width,screen_height))
+    screen.blit(paused_screen, (0,0))
 
 #bullets variables
 bullets = []
@@ -125,7 +108,7 @@ shooting = False
 class Bullet:
     def __init__(self, x, y, speed, direction, image):
         self.x = x
-        self.y = y
+        self.y = y 
         self.speed = speed
         self.direction = direction
         self.image = pygame.image.load(image)
@@ -165,7 +148,6 @@ class Player(pygame.sprite.Sprite):
         self.sprite.append(pygame.image.load("player_right_0008.png"))
         self.sprite.append(pygame.image.load("player_right_0009.png"))
         self.sprite.append(pygame.image.load("player_right_0010.png"))
-        self.sprite.append(pygame.image.load("player_right_0011.png"))
         self.sprite.append(pygame.image.load("player_right_0012.png"))
         self.sprite.append(pygame.image.load("player_right_0013.png"))
         self.teleport_sprites = []
@@ -174,7 +156,6 @@ class Player(pygame.sprite.Sprite):
         self.teleport_sprites.append(pygame.image.load("player_dash_0003.png"))
         self.teleport_sprites.append(pygame.image.load("player_dash_0004.png"))
         self.teleport_sprites.append(pygame.image.load("player_dash_0006.png"))
-        self.teleport_sprites.append(pygame.image.load("player_dash_0008.png"))
         self.current_teleport_sprite = 0
         self.is_teleporting = False
         self.current_sprite = 0
@@ -447,7 +428,8 @@ while game:
                 enemy.health -= 50  
                 bullet_buffer.append(bullet)
                 if enemy.health <= 0 and not enemy.is_dead:
-                    enemy.die() 
+                    enemy.die()
+                    score +=1
                 break
     for bullet in bullet_buffer:
         bullets.remove(bullet)  
