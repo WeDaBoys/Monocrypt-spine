@@ -45,11 +45,18 @@ green = (0, 255, 0)
 blue = (50, 150, 215)
 
 #font
-font = pygame.font.Font(None, 50)
+font = pygame.font.Font('OCRAEXT.TTF', 50)
 text_color = (255, 255, 255)
 def display_text(text, x, y):
     text_surface = font.render(text, True, text_color)
     screen.blit(text_surface, (x, y))
+
+# Load high scores from a file
+try:
+    with open('high_scores.txt', 'r') as f:
+        high_scores = [int(line.strip()) for line in f if line.strip().isdigit()]
+except FileNotFoundError:
+    high_scores = []
 
 #start
 def start_screen():
@@ -71,11 +78,12 @@ def start_screen():
 
 #game over
 def game_over_screen():
+    global score
     end_screen = pygame.image.load("end screen.png")
     end_screen = pygame.transform.scale(end_screen, (screen_width,screen_height))
 
     score_text = font.render(f'Your score is: {score}', True, (255, 255, 255))
-    score_text_rect = score_text.get_rect(center=(screen_width/2, screen_height/2 + 150))  # Center the score text
+    score_text_rect = score_text.get_rect(center=(screen_width/2, screen_height/2 + 80)) 
 
     while True:
         for event in pygame.event.get():
@@ -89,9 +97,17 @@ def game_over_screen():
                     return False  
                 
         screen.fill(black)
-        screen.blit(end_screen, (0,20))
-        screen.blit(score_text, score_text_rect)  # Display the score text
+        screen.blit(end_screen, (0,50))
+        screen.blit(score_text, score_text_rect) 
+
+        for i, high_score in enumerate(high_scores[:3]):  # Use a different variable name here
+            high_score_text_str = f'{i+1}. High Score : {str(high_score).rjust(3, " ")}'  # Right align the score
+            high_score_text = font.render(high_score_text_str, True, (255, 255, 255))  # Use a different variable name here
+            high_score_text_rect = high_score_text.get_rect(center=(screen_width/2, screen_height/2 + 150 + i*50))  # Adjust the position for each score
+            screen.blit(high_score_text, high_score_text_rect)  # Use the new variable here
+
         pygame.display.flip()
+
 
 # Pause Menu
 def pause_menu():
@@ -150,16 +166,11 @@ class Player(pygame.sprite.Sprite):
         self.sprite.append(pygame.image.load("player_right_0012.png"))
         self.sprite.append(pygame.image.load("player_right_0013.png"))
         self.teleport_sprites = []
-        self.teleport_sprites.append(pygame.image.load("player_dash_0000.png"))
         self.teleport_sprites.append(pygame.image.load("player_dash_0001.png"))
         self.teleport_sprites.append(pygame.image.load("player_dash_0002.png"))
         self.teleport_sprites.append(pygame.image.load("player_dash_0003.png"))
         self.teleport_sprites.append(pygame.image.load("player_dash_0004.png"))
-        self.teleport_sprites.append(pygame.image.load("player_dash_0005.png"))
         self.teleport_sprites.append(pygame.image.load("player_dash_0006.png"))
-        self.teleport_sprites.append(pygame.image.load("player_dash_0007.png"))
-        self.teleport_sprites.append(pygame.image.load("player_dash_0009.png"))
-        self.teleport_sprites.append(pygame.image.load("player_dash_0010.png"))
         self.current_teleport_sprite = 0
         self.is_teleporting = False
         self.current_sprite = 0
@@ -245,14 +256,19 @@ class Player(pygame.sprite.Sprite):
         self.invincible = True
         self.current_teleport_sprite = 0
         new_position = self.rect.move(self.direction * TELEPORT_DISTANCE)
-        
-        
-        if new_position.top > 100 and new_position.bottom < (screen_height - 100) and new_position.left > 100 and new_position.right < (screen_width - 100):
-            self.rect = new_position
-            self.last_teleport_frame = current_frame
-        else:
-            self.is_teleporting = False
-            self.invincible = False 
+
+        # Check if the new position would be outside the screen
+        if new_position.top < 100:
+            new_position.top = 100
+        if new_position.bottom > (screen_height - 100):
+            new_position.bottom = screen_height - 100
+        if new_position.left < 100:
+            new_position.left = 100
+        if new_position.right > (screen_width - 100):
+            new_position.right = screen_width - 100
+
+        self.rect = new_position
+        self.last_teleport_frame = current_frame
 def draw_cooldown_bar(screen, x, y, total_width, height, remaining_cooldown, max_cooldown, color):
     # Calculate the width of the cooldown bar
     bar_width = int(remaining_cooldown / max_cooldown * total_width)
@@ -295,11 +311,15 @@ class Enemy:
         self.spawn_sprite_increment = len(self.spawn_images) / self.spawn_duration  
         self.is_dead = False
         self.death_sprites = []
-        self.teleport_sprites.append(pygame.image.load("player_dash_0001.png"))
-        self.teleport_sprites.append(pygame.image.load("player_dash_0002.png"))
-        self.teleport_sprites.append(pygame.image.load("player_dash_0003.png"))
-        self.teleport_sprites.append(pygame.image.load("player_dash_0004.png"))
-        self.teleport_sprites.append(pygame.image.load("player_dash_0006.png"))
+        self.death_sprites.append(pygame.image.load("enemy_death_0000.png"))
+        self.death_sprites.append(pygame.image.load("enemy_death_0001.png"))
+        self.death_sprites.append(pygame.image.load("enemy_death_0002.png"))
+        self.death_sprites.append(pygame.image.load("enemy_death_0003.png"))
+        self.death_sprites.append(pygame.image.load("enemy_death_0004.png"))
+        self.death_sprites.append(pygame.image.load("enemy_death_0005.png"))
+        self.death_sprites.append(pygame.image.load("enemy_death_0006.png"))
+        self.death_sprites.append(pygame.image.load("enemy_death_0007.png"))
+        self.death_sprites.append(pygame.image.load("enemy_death_0008.png"))
         self.current_death_sprite = 0
 
     def die(self):
@@ -484,6 +504,11 @@ while game:
             enemy.bullets = [bullet for bullet in enemy.bullets if not bullet.remove]
 
     if P1.health <= 0:
+        high_scores.append(score)
+        high_scores.sort(reverse=True)
+        with open('high_scores.txt', 'w') as f:
+            for score in high_scores:
+                f.write(str(score) + '\n')
         if game_over_screen():  
             P1 = Player()
             active_enemies.clear()
@@ -512,7 +537,7 @@ while game:
     score_text = font.render(f'Score: {score}', True, (255, 255, 255)) 
     text_width = score_text.get_width()  
     screen_width = screen.get_width() 
-    screen.blit(score_text, ((screen_width - text_width) - 40, 20)) 
+    screen.blit(score_text, ((screen_width - text_width) - 40, 10)) 
 
 
     if not P1.can_teleport(current_frame):
