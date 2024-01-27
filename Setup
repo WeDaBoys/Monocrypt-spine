@@ -23,9 +23,9 @@ quit_sound = pygame.mixer.Sound('quit.wav')
 title_music = "title_music.mp3"
 game_music = "ingame_music.mp3"
 end_music = "end_music.mp3"
-enemy_hurt_sound.set_volume(0.4)
+enemy_hurt_sound.set_volume(0.3)
 player_hurt_sound.set_volume(0.2)
-player_shot_sound.set_volume(0.4)
+player_shot_sound.set_volume(0.3)
 enemy_spawn_sound.set_volume(0.1)
 teleport_sound.set_volume(0.6)
 #Variables
@@ -408,8 +408,8 @@ P1 = Player()
 # Enemy
 class Enemy:
     def __init__(self, x, y, speed, image):
-        x = random.randint(0, screen_width - 100)
-        y = random.randint(0, screen_height - 100)
+        x = random.randint(0, screen_width - 100 -50)
+        y = random.randint(0, screen_height - 100 - 50)
         self.rect = pygame.Rect(x, y, 50, 50)  
         self.speed = speed
         self.original_image = pygame.image.load(image)  
@@ -483,6 +483,8 @@ class Enemy:
                 new_y = self.rect.y + self.speed * new_direction[1]
                 if 0 <= new_x <= (screen_width-80) - self.rect.width and 0 <= new_y <= (screen_height-80) - self.rect.height:
                     self.direction = new_direction   
+                else:
+                    self.direction = -new_direction
 
             new_x = self.rect.x + self.speed * self.direction[0]
             new_y = self.rect.y + self.speed * self.direction[1]
