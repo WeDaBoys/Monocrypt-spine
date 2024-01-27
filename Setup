@@ -32,6 +32,8 @@ teleport_sound.set_volume(0.6)
 FPS = 60
 FramePerSec = pygame.time.Clock()
 SPEED = 5
+p1_health = 60
+player_bullet_speed = 5
 vec = pygame.math.Vector2
 HEIGHT = 350
 WIDTH = 700
@@ -44,7 +46,8 @@ HEART_WIDTH = 70
 HEART_HEIGHT = 70
 TELEPORT_DISTANCE = 100
 TELEPORT_COOLDOWN = 60 * 5
-score = 0
+points = 0 # For purchasing upgrades
+score = 0 # For high scores
 paused = False
 enablekeypress_events = True
 
@@ -177,22 +180,89 @@ def game_over_screen(score):
                     pygame.time.delay(850)  
                     return False  
 
+# Button
+class Button(pygame.sprite.Sprite):
+    def __init__(self, x, y, width, height, image_path, action, name, tooltip):
+        super().__init__()
+        self.image = pygame.image.load(image_path)
+        self.image = pygame.transform.scale(self.image, (width, height))
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (x, y)
+        self.action = action
+        self.name = name
+        self.tooltip = tooltip
+
+    def is_clicked(self, mouse_pos):
+        clicked = self.rect.collidepoint(mouse_pos)
+        if clicked and self.action:
+            self.action()
+    
+def show_tooltip(button):
+    name_text = font.render(button.name, True, (255, 255, 255))
+    tooltip_text = font.render(button.tooltip, True, (255, 255, 255))
+    cost_text = font.render(f'COST: {cost}', True, (255, 255, 255))
+    screen.blit(name_text, (screen_width * 0.06, screen_height * 0.63))
+    screen.blit(tooltip_text, (screen_width * 0.06, screen_height * 0.7))
+    screen.blit(cost_text, (screen_width * 0.06, screen_height * 0.77))
+
+cost = 1
+
+def player_bullet_speed_increase():
+    global player_bullet_speed, points, cost
+    if points >= cost:
+        player_shot_sound.play()
+        player_bullet_speed += 1
+        points -= cost
+    else:
+        enemy_hurt_sound.play()
+
+def player_movement_speed_increase():
+    global SPEED, points, cost
+    if points >= cost:
+        player_shot_sound.play()
+        SPEED += 1
+        points -= cost
+    else:
+        enemy_hurt_sound.play()
+
+def more_health():
+    global points, cost
+    if points >= cost:
+        player_shot_sound.play()
+        P1.health += 20
+        points -= cost
+    else:
+        enemy_hurt_sound.play()
+
+buttons = [
+    Button(screen_width * 0.06, screen_height * 0.25, 300, 300, 'speedy_projectiles.png', player_bullet_speed_increase, "Projectile Acceleration -", "Increases speed of projectile."),
+    Button(screen_width * 0.36, screen_height * 0.25, 300, 300, 'ectoplasm_feet.png', player_movement_speed_increase, "Ectoplasm Feet -", "Makes your feet go faster."),
+    Button(screen_width * 0.66, screen_height * 0.25, 300, 300, 'more_lifeblood.png', more_health, "Lifeblood -", "Increases your health.")
+]
+
 # Pause Menu
 def pause_menu():
     paused_screen = pygame.image.load("paused.png")
-    paused_screen = pygame.transform.scale(paused_screen, (screen_width,screen_height))
+    paused_screen = pygame.transform.scale(paused_screen, (screen_width, screen_height))
+    points_text = font.render(f'POINTS: {points}', True, (255, 255, 255))
     screen.fill(black)
     screen.blit(paused_screen, (0,0))
+    screen.blit(points_text, (10, 3))
+
+    for button in buttons:
+        screen.blit(button.image, button.rect.topleft)
+        if button.rect.collidepoint(pygame.mouse.get_pos()):
+            show_tooltip(button)
 
 #bullets variables
 bullets = []
 shooting = False
 
 class Bullet:
-    def __init__(self, x, y, speed, direction, image):
+    def __init__(self, x, y, speed, direction, image, player_bullet):
         self.x = x
         self.y = y
-        self.speed = speed
+        self.speed = player_bullet_speed if player_bullet==True else speed
         self.direction = direction
         self.image = pygame.image.load(image)
         self.rect = self.image.get_rect()
@@ -293,7 +363,7 @@ class Player(pygame.sprite.Sprite):
         self.rect.height -= 20  
         self.rect.center = (self.x, self.y)
 
-        self.health = 80
+        self.health = p1_health
         self.heart_image = pygame.image.load("heart.png")
         self.heart_image = pygame.transform.scale(self.heart_image, (HEART_WIDTH, HEART_HEIGHT))
 
@@ -412,7 +482,7 @@ P1 = Player()
 # Enemy
 class Enemy:
     def __init__(self, x, y, speed, image):
-        x = random.randint(0, screen_width - 100 -50)
+        x = random.randint(0, screen_width - 100 - 50)
         y = random.randint(0, screen_height - 100 - 50)
         self.rect = pygame.Rect(x, y, 50, 50)  
         self.speed = speed
@@ -489,7 +559,7 @@ class Enemy:
                     self.direction = new_direction   
                 else:
                     self.direction = -new_direction
-
+                    
             new_x = self.rect.x + self.speed * self.direction[0]
             new_y = self.rect.y + self.speed * self.direction[1]
             if 0 <= new_x <= (screen_width-80) - self.rect.width:
@@ -517,7 +587,7 @@ class Enemy:
     def shoot(self, target):
         if self.shoot_delay <= 0:  
             dir_vector = vec(target.rect.centerx - self.rect.centerx, target.rect.centery - self.rect.centery)
-            bullet = Bullet(self.rect.centerx, self.rect.centery, 5, dir_vector, 'enemy_bullet.png') 
+            bullet = Bullet(self.rect.centerx, self.rect.centery, 5, dir_vector, 'enemy_bullet.png', player_bullet=False) 
             self.bullets.append(bullet)
             self.shoot_delay = 100
             self.just_shot = True
@@ -562,12 +632,18 @@ while game:
             sys.exit()
         elif event.type == MOUSEBUTTONDOWN:
             if event.button == 1:
-                player_shot_sound.play()
                 mouse_pos = pygame.mouse.get_pos()
                 dir_vector = vec(mouse_pos[0] - P1.rect.centerx, mouse_pos[1] - P1.rect.centery)
-                bullet = Bullet(P1.rect.centerx, P1.rect.centery, 10, dir_vector, 'bullet.png') 
-                bullets.append(bullet)
-                shooting = True 
+                if not paused:
+                    player_shot_sound.play()
+                    bullet = Bullet(P1.rect.centerx, P1.rect.centery, 10, dir_vector, 'bullet.png', player_bullet=True) 
+                    bullets.append(bullet)
+                    shooting = True
+                    # Check if any button is clicked
+                else:
+                    for button in buttons:
+                        if button.is_clicked(mouse_pos):
+                            button.action()
         elif event.type == MOUSEBUTTONUP:
             if event.button == 1:
                 shooting = False
@@ -603,6 +679,7 @@ while game:
                 bullet_buffer.append(bullet)
                 if enemy.health <= 0 and not enemy.is_dead:
                     enemy.die() 
+                    points += 1
                     score += 1  # Increment the score when an enemy dies
                 break
     for bullet in bullet_buffer:
@@ -650,8 +727,6 @@ while game:
             enemy_shoot_sound.play()
             enemy.just_shot = False
 
-
-
     if P1.health <= 0:
         enablekeypress_events = False
         if not P1.player_dead():
@@ -684,13 +759,15 @@ while game:
                 enemy_count = 1
                 spawn_new_enemies(enemy_count)
                 bullets = []
+                player_bullet_speed = 5
+                SPEED = 5
+                point = 0
                 score = 0
             else:
                 pygame.quit()
                 sys.exit()
-
+        
     P1.update()
-
 
     screen.fill(white)
     screen.blit(background, (0, 0))
