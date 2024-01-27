@@ -165,7 +165,11 @@ def game_over_screen(score):
                             screen.blit(high_score_text, high_score_text_rect) 
 
                         pygame.display.flip()
-                        pygame.time.delay(150)  
+                        pygame.time.delay(150)
+                    pygame.mixer.music.stop()
+                    pygame.mixer.music.load(game_music)
+                    pygame.mixer.music.set_volume(0.05)
+                    pygame.mixer.music.play(-1)  
 
                     return True  
                 elif event.key == pygame.K_q:
