@@ -37,6 +37,8 @@ TELEPORT_DISTANCE = 100
 TELEPORT_COOLDOWN = 60 * 5
 score = 0
 paused = False
+enablekeypress_events = True
+
 
 #screen information
 screen_width = 1056
@@ -208,16 +210,60 @@ class Player(pygame.sprite.Sprite):
         self.sprite.append(pygame.image.load("player_right_0010.png"))
         self.sprite.append(pygame.image.load("player_right_0012.png"))
         self.sprite.append(pygame.image.load("player_right_0013.png"))
+        self.current_sprite = 0
+        self.image = self.sprite[self.current_sprite]
+
         self.teleport_sprites = []
         self.teleport_sprites.append(pygame.image.load("player_dash_0001.png"))
         self.teleport_sprites.append(pygame.image.load("player_dash_0002.png"))
         self.teleport_sprites.append(pygame.image.load("player_dash_0003.png"))
         self.teleport_sprites.append(pygame.image.load("player_dash_0004.png"))
         self.teleport_sprites.append(pygame.image.load("player_dash_0006.png"))
+
         self.current_teleport_sprite = 0
         self.is_teleporting = False
-        self.current_sprite = 0
-        self.image = self.sprite[self.current_sprite]
+
+        self.death_anim = []
+        self.death_anim.append(pygame.image.load("player_death anim_0000.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0001.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0002.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0003.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0004.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0005.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0006.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0007.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0008.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0009.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0010.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0011.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0012.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0013.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0014.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0015.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0016.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0017.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0018.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0019.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0020.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0021.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0022.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0023.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0024.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0025.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0026.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0027.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0028.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0030.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0031.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0032.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0033.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0034.png"))
+        self.death_anim.append(pygame.image.load("player_death anim_0035.png"))
+
+        self.current_death_sprite = 0
+        self.is_dying = False
+
+
         self.rect = self.image.get_rect()
         self.rect.center = (self.x, self.y)
         self.direction = pygame.math.Vector2(0, -1)  
@@ -236,37 +282,38 @@ class Player(pygame.sprite.Sprite):
         self.invincible = False
 
     def update(self):
-        pressed_keys = pygame.key.get_pressed()
-        if self.rect.top > 100:
-            if pressed_keys[K_w]:
+        if enablekeypress_events:
+            pressed_keys = pygame.key.get_pressed()
+            if self.rect.top > 100:
                 if pressed_keys[K_w]:
+                    if pressed_keys[K_w]:
+                        self.image = self.image_front
+                        self.rect.move_ip(0, -SPEED)
+                        self.direction = pygame.math.Vector2(0, -1)  # Up
+            if self.rect.bottom < (screen_height - 100):    
+                if pressed_keys[K_s]:
                     self.image = self.image_front
-                    self.rect.move_ip(0, -SPEED)
-                    self.direction = pygame.math.Vector2(0, -1)  # Up
-        if self.rect.bottom < (screen_height - 100):    
-            if pressed_keys[K_s]:
-                self.image = self.image_front
-                self.rect.move_ip(0, SPEED)
-                self.direction = pygame.math.Vector2(0, 1)  # Down
-        if self.rect.left > 100:
-            if pressed_keys[K_a]:
-                self.image = self.image_left
-                self.rect.move_ip(-SPEED, 0)
-                self.direction = pygame.math.Vector2(-1, 0)  # Left
-        if self.rect.right < (screen_width - 100):        
-            if pressed_keys[K_d]:
-                self.image = self.image_right
-                self.rect.move_ip(SPEED, 0)
-                self.direction = pygame.math.Vector2(1, 0)  # Right
+                    self.rect.move_ip(0, SPEED)
+                    self.direction = pygame.math.Vector2(0, 1)  # Down
+            if self.rect.left > 100:
+                if pressed_keys[K_a]:
+                    self.image = self.image_left
+                    self.rect.move_ip(-SPEED, 0)
+                    self.direction = pygame.math.Vector2(-1, 0)  # Left
+            if self.rect.right < (screen_width - 100):        
+                if pressed_keys[K_d]:
+                    self.image = self.image_right
+                    self.rect.move_ip(SPEED, 0)
+                    self.direction = pygame.math.Vector2(1, 0)  # Right
 
-        if pressed_keys[K_a] or pressed_keys[K_d] or pressed_keys[K_w] or pressed_keys[K_s]:
-            self.current_sprite += 0.2
-            if self.current_sprite >= len(self.sprite):
-                self.current_sprite = 0
-            self.image = self.sprite[int(self.current_sprite)]
-            
-            if pressed_keys[K_a]:
-                self.image = pygame.transform.flip(self.image, True, False)
+            if pressed_keys[K_a] or pressed_keys[K_d] or pressed_keys[K_w] or pressed_keys[K_s]:
+                self.current_sprite += 0.2
+                if self.current_sprite >= len(self.sprite):
+                    self.current_sprite = 0
+                self.image = self.sprite[int(self.current_sprite)]
+                
+                if pressed_keys[K_a]:
+                    self.image = pygame.transform.flip(self.image, True, False)
         
         if self.is_teleporting:
             self.current_teleport_sprite += 0.2
@@ -279,6 +326,19 @@ class Player(pygame.sprite.Sprite):
                 if self.direction.x < 0:  
                     self.image = pygame.transform.flip(self.image, True, False)
 
+        if self.is_dying:
+            self.current_death_sprite +=0.2
+            if self.current_death_sprite >= len(self.death_anim):
+                self.is_dying = False
+                return self.is_dying
+            else:
+                self.image = self.death_anim[int(self.current_death_sprite)]
+                if self.direction.x < 0:  
+                    self.image = pygame.transform.flip(self.image, True, False)
+            
+      
+        self.hitbox.topleft = self.rect.topleft
+        
         self.hitbox.topleft = self.rect.topleft
 
     def draw(self, surface):
@@ -288,7 +348,11 @@ class Player(pygame.sprite.Sprite):
     def draw_health_hearts(self, surface):
         for i in range(self.health // 20):  
             surface.blit(self.heart_image, (10 + i * HEART_WIDTH, 10)) 
-    
+    #dying
+    def player_dead(self):
+        self.is_dying = True
+        self.current_dying_sprite = 0
+
     #teleport
     def can_teleport(self, current_frame):
         
@@ -493,7 +557,7 @@ while game:
         bullet.draw(screen)
         for enemy in active_enemies:
             if bullet.rect.colliderect(enemy.rect) and enemy.spawn_duration <= 0 and not enemy.is_dead:  
-                enemy.health -= 50  
+                enemy.health -= 50
                 enemy_hurt_sound.play()  # Play the enemy hurt sound effect
                 bullet_buffer.append(bullet)
                 if enemy.health <= 0 and not enemy.is_dead:
@@ -541,25 +605,38 @@ while game:
             enemy.bullets = [bullet for bullet in enemy.bullets if not bullet.remove]
 
     if P1.health <= 0:
-        player_death_sound.play()
-        high_scores.append(score)
-        high_scores.sort(reverse=True)
-        with open('high_scores.txt', 'w') as f:
-            for high_score in high_scores:
-                f.write(str(high_score) + '\n')
-        if game_over_screen(score):  
-            P1 = Player()
-            active_enemies.clear()
-            enemy = Enemy(100, 100, 2, 'enemy.png')
-            enemy_count = 1
-            spawn_new_enemies(enemy_count)
-            bullets = []
-            score = 0
-        else:
-            pygame.quit()
-            sys.exit()
+            enablekeypress_events = False
+            if not P1.player_dead():
+                P1.is_dying = True
+                if P1.current_death_sprite >= len(P1.death_anim):
+                    P1.is_dying = False
+
+            if not P1.is_dying:
+                player_death_sound.play()
+                high_scores.append(score)
+                high_scores.sort(reverse=True)
+                with open('high_scores.txt', 'w') as f:
+                    for high_score in high_scores:
+                        f.write(str(high_score) + '\n')
+                
+                    
+                if game_over_screen(score):
+                    P1 = Player()
+                    enablekeypress_events = True
+                    active_enemies.clear()
+                    enemy = Enemy(100, 100, 2, 'enemy.png')
+                    enemy_count = 1
+                    spawn_new_enemies(enemy_count)
+                    bullets = []
+                    score = 0
+                else:
+                    pygame.quit()
+                    sys.exit()
+            
+            
         
     P1.update()
+
 
     screen.fill(white)
     screen.blit(background, (0, 0))
@@ -572,7 +649,7 @@ while game:
     P1.draw_health_hearts(screen)
     
     screen.blit(arrow_image_rotated, arrow_rect.topleft) 
-    score_text = font.render(f'Score: {score}', True, (255, 255, 255)) 
+    score_text = font.render(f'SCORE: {score}', True, (255, 255, 255)) 
     text_width = score_text.get_width()  
     screen_width = screen.get_width() 
     screen.blit(score_text, ((screen_width - text_width) - 40, 10)) 
