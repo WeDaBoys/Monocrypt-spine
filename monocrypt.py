@@ -31,9 +31,12 @@ pause_on_sound = pygame.mixer.Sound('pause on.wav')
 pause_off_sound = pygame.mixer.Sound('pause off.wav')
 enemy_shoot_sound = pygame.mixer.Sound('enemy shot.wav')
 quit_sound = pygame.mixer.Sound('quit.wav')
+perk_sound = pygame.mixer.Sound('perk obtained.wav')
+deny_sound = pygame.mixer.Sound('deny.wav')
 title_music = "title_music.mp3"
 game_music = "ingame_music.mp3"
 end_music = "end_music.mp3"
+perk_sound.set_volume(1.3)
 enemy_hurt_sound.set_volume(0.3)
 player_hurt_sound.set_volume(0.2)
 player_shot_sound.set_volume(0.3)
@@ -112,7 +115,7 @@ def start_screen():
                 if event.key == pygame.K_SPACE:
                     space_start_sound.play()
 
-                    # Stop the title music and start the game music
+                    
                     pygame.mixer.music.stop()
                     pygame.mixer.music.load(game_music)
                     pygame.mixer.music.set_volume(0.05)
@@ -147,11 +150,11 @@ def game_over_screen(score):
         screen.blit(end_screen, (0,50))
         screen.blit(score_text, score_text_rect) 
 
-        for i, high_score in enumerate(high_scores[:3]):  # Use a different variable name here
-            high_score_text_str = f'{i+1}. High Score : {str(high_score).rjust(3, " ")}'  # Right align the score
-            high_score_text = font.render(high_score_text_str, True, (255, 255, 255))  # Use a different variable name here
-            high_score_text_rect = high_score_text.get_rect(center=(screen_width/2, screen_height/2 + 150 + i*50))  # Adjust the position for each score
-            screen.blit(high_score_text, high_score_text_rect)  # Use the new variable here
+        for i, high_score in enumerate(high_scores[:3]):  
+            high_score_text_str = f'{i+1}. High Score : {str(high_score).rjust(3, " ")}'  
+            high_score_text = font.render(high_score_text_str, True, (255, 255, 255))  
+            high_score_text_rect = high_score_text.get_rect(center=(screen_width/2, screen_height/2 + 150 + i*50))  
+            screen.blit(high_score_text, high_score_text_rect)  
 
         pygame.display.flip()
 
@@ -162,6 +165,8 @@ def game_over_screen(score):
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:  
                     retry_sound.play()
+                    global points
+                    points = 0
 
                     # Animation
                     for i in range(3):  
@@ -193,7 +198,7 @@ def game_over_screen(score):
 
 # Button
 class Button(pygame.sprite.Sprite):
-    def __init__(self, x, y, width, height, image_path, action, name, tooltip):
+    def __init__(self, x, y, width, height, image_path, action, name, tooltip, cost):
         super().__init__()
         self.image = pygame.image.load(image_path)
         self.image = pygame.transform.scale(self.image, (width, height))
@@ -202,6 +207,7 @@ class Button(pygame.sprite.Sprite):
         self.action = action
         self.name = name
         self.tooltip = tooltip
+        self.cost = cost
 
     def is_clicked(self, mouse_pos):
         clicked = self.rect.collidepoint(mouse_pos)
@@ -211,44 +217,46 @@ class Button(pygame.sprite.Sprite):
 def show_tooltip(button):
     name_text = font.render(button.name, True, (255, 255, 255))
     tooltip_text = font.render(button.tooltip, True, (255, 255, 255))
-    cost_text = font.render(f'COST: {cost}', True, (255, 255, 255))
+    cost_text = font.render(f'COST: {button.cost}', True, (255, 255, 255))
     screen.blit(name_text, (screen_width * 0.06, screen_height * 0.63))
     screen.blit(tooltip_text, (screen_width * 0.06, screen_height * 0.7))
     screen.blit(cost_text, (screen_width * 0.06, screen_height * 0.77))
 
-cost = 1
-
+cost_speed = 10
+cost_health = 20
+cost_shoot = 5
+#perks
 def player_bullet_speed_increase():
-    global player_bullet_speed, points, cost
-    if points >= cost:
-        player_shot_sound.play()
-        player_bullet_speed += 1
-        points -= cost
+    global player_bullet_speed, points, cost_shoot
+    if points >= cost_shoot:
+        perk_sound.play()
+        player_bullet_speed += 0.7
+        points -= cost_shoot
     else:
-        enemy_hurt_sound.play()
+        deny_sound.play()
 
 def player_movement_speed_increase():
-    global SPEED, points, cost
-    if points >= cost:
-        player_shot_sound.play()
-        SPEED += 1
-        points -= cost
+    global SPEED, points, cost_speed
+    if points >= cost_speed:
+        perk_sound.play()
+        SPEED += 0.4
+        points -= cost_speed
     else:
-        enemy_hurt_sound.play()
+        deny_sound.play()
 
 def more_health():
-    global points, cost
-    if points >= cost:
-        player_shot_sound.play()
+    global points, cost_health
+    if points >= cost_health:
+        perk_sound.play()
         P1.health += 20
-        points -= cost
+        points -= cost_health
     else:
-        enemy_hurt_sound.play()
+        deny_sound.play()
 
 buttons = [
-    Button(screen_width * 0.06, screen_height * 0.25, 300, 300, 'speedy_projectiles.png', player_bullet_speed_increase, "Projectile Acceleration -", "Increases speed of projectile."),
-    Button(screen_width * 0.36, screen_height * 0.25, 300, 300, 'ectoplasm_feet.png', player_movement_speed_increase, "Ectoplasm Feet -", "Makes your feet go faster."),
-    Button(screen_width * 0.66, screen_height * 0.25, 300, 300, 'more_lifeblood.png', more_health, "Lifeblood -", "Increases your health.")
+    Button(screen_width * 0.06, screen_height * 0.25, 300, 300, 'speedy_projectiles.png', player_bullet_speed_increase, "Projectile Acceleration -", "Increases speed of projectile.", cost_shoot),
+    Button(screen_width * 0.36, screen_height * 0.25, 300, 300, 'ectoplasm_feet.png', player_movement_speed_increase, "Ectoplasm Feet -", "Makes your feet go faster.", cost_speed),
+    Button(screen_width * 0.66, screen_height * 0.25, 300, 300, 'more_lifeblood.png', more_health, "Lifeblood -", "Increases your health.", cost_health)
 ]
 
 # Pause Menu
@@ -480,10 +488,10 @@ class Player(pygame.sprite.Sprite):
         self.current_dying_sprite = 0
 
 def draw_cooldown_bar(screen, x, y, total_width, height, remaining_cooldown, max_cooldown, color):
-    # Calculate the width of the cooldown bar
+    
     bar_width = int(remaining_cooldown / max_cooldown * total_width)
 
-    # Draw the cooldown bar
+    
     pygame.draw.rect(screen, color, pygame.Rect(x, y, bar_width, height))
 cooldown_icon = pygame.image.load("cooldown_icon.png") 
 cooldown_icon = pygame.transform.scale(cooldown_icon, (50, 50))  
@@ -536,7 +544,7 @@ class Enemy:
         self.is_hit = False
         self.just_shot = False
     
-    def hit(self):  # Method to handle when the enemy is hit
+    def hit(self):  
         self.is_hit = True
         self.image = self.hit_image
 
@@ -642,7 +650,7 @@ while game:
             pygame.quit()
             sys.exit()
         elif event.type == MOUSEBUTTONDOWN:
-            if event.button == 1:
+            if event.button == 1 and not P1.is_dying:
                 mouse_pos = pygame.mouse.get_pos()
                 dir_vector = vec(mouse_pos[0] - P1.rect.centerx, mouse_pos[1] - P1.rect.centery)
                 if not paused:
@@ -650,7 +658,7 @@ while game:
                     bullet = Bullet(P1.rect.centerx, P1.rect.centery, 10, dir_vector, 'bullet.png', player_bullet=True) 
                     bullets.append(bullet)
                     shooting = True
-                    # Check if any button is clicked
+                    
                 else:
                     for button in buttons:
                         if button.is_clicked(mouse_pos):
@@ -686,12 +694,12 @@ while game:
             if bullet.rect.colliderect(enemy.rect) and enemy.spawn_duration <= 0 and not enemy.is_dead:  
                 enemy.health -= 50  
                 enemy.hit()
-                enemy_hurt_sound.play()  # Play the enemy hurt sound effect
+                enemy_hurt_sound.play()  
                 bullet_buffer.append(bullet)
                 if enemy.health <= 0 and not enemy.is_dead:
                     enemy.die() 
                     points += 1
-                    score += 1  # Increment the score when an enemy dies
+                    score += 1  
                 break
     for bullet in bullet_buffer:
         bullets.remove(bullet)  
