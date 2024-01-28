@@ -36,12 +36,21 @@ deny_sound = pygame.mixer.Sound('deny.wav')
 title_music = "title_music.mp3"
 game_music = "ingame_music.mp3"
 end_music = "end_music.mp3"
-perk_sound.set_volume(1.3)
-enemy_hurt_sound.set_volume(0.3)
+muted = False
 player_hurt_sound.set_volume(0.2)
+enemy_hurt_sound.set_volume(0.3)
+space_start_sound.set_volume(1)
+player_death_sound.set_volume(1)
+retry_sound.set_volume(1)
 player_shot_sound.set_volume(0.3)
 enemy_spawn_sound.set_volume(0.1)
 teleport_sound.set_volume(0.6)
+pause_on_sound.set_volume(1)
+pause_off_sound.set_volume(1)
+enemy_shoot_sound.set_volume(1)
+quit_sound.set_volume(1)
+perk_sound.set_volume(1.3)
+deny_sound.set_volume(1)
 #Variables
 FPS = 60
 FramePerSec = pygame.time.Clock()
@@ -101,8 +110,9 @@ except FileNotFoundError:
 #start
 def start_screen():
     pygame.mixer.music.load(title_music)
-    pygame.mixer.music.set_volume(0.3)
-    pygame.mixer.music.play(-1)
+    if not muted:
+        pygame.mixer.music.set_volume(0.3)
+        pygame.mixer.music.play(-1)
     title = pygame.image.load("title screen.png")
     title = pygame.transform.scale(title,(screen_width,screen_height))
 
@@ -115,11 +125,11 @@ def start_screen():
                 if event.key == pygame.K_SPACE:
                     space_start_sound.play()
 
-                    
                     pygame.mixer.music.stop()
                     pygame.mixer.music.load(game_music)
-                    pygame.mixer.music.set_volume(0.05)
-                    pygame.mixer.music.play(-1)
+                    if not muted:
+                        pygame.mixer.music.set_volume(0.05)
+                        pygame.mixer.music.play(-1)
 
                     # Animation
                     for i in range(3):  
@@ -187,8 +197,9 @@ def game_over_screen(score):
                         pygame.time.delay(150)
                     pygame.mixer.music.stop()
                     pygame.mixer.music.load(game_music)
-                    pygame.mixer.music.set_volume(0.05)
-                    pygame.mixer.music.play(-1)  
+                    if not muted:
+                        pygame.mixer.music.set_volume(0.05)
+                        pygame.mixer.music.play(-1)  
 
                     return True  
                 elif event.key == pygame.K_q:
@@ -196,9 +207,9 @@ def game_over_screen(score):
                     pygame.time.delay(850)  
                     return False  
 
-# Button
+# Perks
 class Button(pygame.sprite.Sprite):
-    def __init__(self, x, y, width, height, image_path, action, name, tooltip, cost):
+    def __init__(self, x, y, width, height, image_path, action=None, name=None, tooltip=None, cost=None):
         super().__init__()
         self.image = pygame.image.load(image_path)
         self.image = pygame.transform.scale(self.image, (width, height))
@@ -215,63 +226,130 @@ class Button(pygame.sprite.Sprite):
             self.action()
     
 def show_tooltip(button):
-    name_text = font.render(button.name, True, (255, 255, 255))
-    tooltip_text = font.render(button.tooltip, True, (255, 255, 255))
-    cost_text = font.render(f'COST: {button.cost}', True, (255, 255, 255))
-    screen.blit(name_text, (screen_width * 0.06, screen_height * 0.63))
-    screen.blit(tooltip_text, (screen_width * 0.06, screen_height * 0.7))
-    screen.blit(cost_text, (screen_width * 0.06, screen_height * 0.77))
+    if button.cost is not None:
+        name_text = font.render(button.name, True, (255, 255, 255))
+        tooltip_text = font.render(button.tooltip, True, (255, 255, 255))
+        cost_text = font.render(f'COST: {button.cost}', True, (255, 255, 255))
+        screen.blit(name_text, (screen_width * 0.06, screen_height * 0.63))
+        screen.blit(tooltip_text, (screen_width * 0.06, screen_height * 0.7))
+        screen.blit(cost_text, (screen_width * 0.06, screen_height * 0.77))
 
-cost_speed = 10
-cost_health = 20
-cost_shoot = 5
-#perks
 def player_bullet_speed_increase():
-    global player_bullet_speed, points, cost_shoot
-    if points >= cost_shoot:
+    global player_bullet_speed, points
+    if points >= button.cost:
         perk_sound.play()
         player_bullet_speed += 0.7
-        points -= cost_shoot
+        points -= button.cost
     else:
         deny_sound.play()
 
 def player_movement_speed_increase():
-    global SPEED, points, cost_speed
-    if points >= cost_speed:
+    global SPEED, points
+    if points >= button.cost:
         perk_sound.play()
         SPEED += 0.4
-        points -= cost_speed
+        points -= button.cost
     else:
         deny_sound.play()
 
 def more_health():
-    global points, cost_health
-    if points >= cost_health:
+    global points
+    if points >= button.cost:
         perk_sound.play()
         P1.health += 20
-        points -= cost_health
+        points -= button.cost
     else:
         deny_sound.play()
 
-buttons = [
-    Button(screen_width * 0.06, screen_height * 0.25, 300, 300, 'speedy_projectiles.png', player_bullet_speed_increase, "Projectile Acceleration -", "Increases speed of projectile.", cost_shoot),
-    Button(screen_width * 0.36, screen_height * 0.25, 300, 300, 'ectoplasm_feet.png', player_movement_speed_increase, "Ectoplasm Feet -", "Makes your feet go faster.", cost_speed),
-    Button(screen_width * 0.66, screen_height * 0.25, 300, 300, 'more_lifeblood.png', more_health, "Lifeblood -", "Increases your health.", cost_health)
+# Settings
+in_settings = False
+
+def settings_open():
+    global in_settings
+    in_settings = True
+
+def settings_close():
+    global in_settings
+    in_settings = False
+
+def set_muted():
+    global muted
+    muted = not muted
+    if muted:
+        pygame.mixer.music.pause()
+        player_hurt_sound.set_volume(0)
+        enemy_hurt_sound.set_volume(0)
+        space_start_sound.set_volume(0)
+        player_death_sound.set_volume(0)
+        retry_sound.set_volume(0)
+        player_shot_sound.set_volume(0)
+        enemy_spawn_sound.set_volume(0)
+        teleport_sound.set_volume(0)
+        pause_on_sound.set_volume(0)
+        pause_off_sound.set_volume(0)
+        enemy_shoot_sound.set_volume(0)
+        quit_sound.set_volume(0)
+        perk_sound.set_volume(0)
+        deny_sound.set_volume(0)
+    else:
+        pygame.mixer.music.unpause()
+        player_hurt_sound.set_volume(0.2)
+        enemy_hurt_sound.set_volume(0.3)
+        space_start_sound.set_volume(1)
+        player_death_sound.set_volume(1)
+        retry_sound.set_volume(1)
+        player_shot_sound.set_volume(0.3)
+        enemy_spawn_sound.set_volume(0.1)
+        teleport_sound.set_volume(0.6)
+        pause_on_sound.set_volume(1)
+        pause_off_sound.set_volume(1)
+        enemy_shoot_sound.set_volume(1)
+        quit_sound.set_volume(1)
+        perk_sound.set_volume(1.3)
+        deny_sound.set_volume(1)
+
+settings_button = Button(screen_width * 0.83, screen_height * 0.82, 100, 100, 'settings.png', settings_open)
+back_button = Button(screen_width * 0.1, screen_height * 0.82, 100, 100, 'back.png', settings_close)
+volume_button = Button(screen_width * 0.27, screen_height * 0.2 - 22, 100, 100, 'volume_on.png', set_muted)
+
+perks = [
+    Button(screen_width * 0.06, screen_height * 0.25, 300, 300, 'speedy_projectiles.png', player_bullet_speed_increase, "Projectile Acceleration -", "Increases speed of projectile.", 5),
+    Button(screen_width * 0.36, screen_height * 0.25, 300, 300, 'ectoplasm_feet.png', player_movement_speed_increase, "Ectoplasm Feet -", "Makes your feet go faster.", 10),
+    Button(screen_width * 0.66, screen_height * 0.25, 300, 300, 'more_lifeblood.png', more_health, "Lifeblood -", "Increases your health.", 20),
+    settings_button
+]
+
+settings = [
+    back_button,
+    volume_button
 ]
 
 # Pause Menu
 def pause_menu():
-    paused_screen = pygame.image.load("paused.png")
-    paused_screen = pygame.transform.scale(paused_screen, (screen_width, screen_height))
-    points_text = font.render(f'POINTS: {points}', True, (255, 255, 255))
-    screen.fill(black)
-    screen.blit(paused_screen, (0,0))
-    screen.blit(points_text, (10, 3))
+    if not in_settings:
+        paused_screen = pygame.image.load("paused.png")
+        paused_screen = pygame.transform.scale(paused_screen, (screen_width, screen_height))
+        points_text = font.render(f'POINTS: {points}', True, (255, 255, 255))
+        screen.fill(black)
+        screen.blit(paused_screen, (0,0))
+        screen.blit(points_text, (10, 3))
 
-    for button in buttons:
-        screen.blit(button.image, button.rect.topleft)
-        if button.rect.collidepoint(pygame.mouse.get_pos()):
-            show_tooltip(button)
+        for button in perks:
+            screen.blit(button.image, button.rect.topleft)
+            if button.rect.collidepoint(pygame.mouse.get_pos()):
+                show_tooltip(button)
+
+    else:
+        muted_image = pygame.image.load("volume_dead.png")
+        muted_image = pygame.transform.scale(muted_image, (100, 100))
+        volume_text = font.render(f'SOUND:', True, (255, 255, 255))
+        screen.fill(black)
+        screen.blit(volume_text, (screen_width * 0.1, screen_height * 0.2))
+        if muted:
+            screen.blit(muted_image, volume_button.rect.topleft)
+        else:
+            screen.blit(volume_button.image, volume_button.rect.topleft)
+        screen.blit(back_button.image, back_button.rect.topleft)
 
 #bullets variables
 bullets = []
@@ -488,10 +566,8 @@ class Player(pygame.sprite.Sprite):
         self.current_dying_sprite = 0
 
 def draw_cooldown_bar(screen, x, y, total_width, height, remaining_cooldown, max_cooldown, color):
-    
     bar_width = int(remaining_cooldown / max_cooldown * total_width)
 
-    
     pygame.draw.rect(screen, color, pygame.Rect(x, y, bar_width, height))
 cooldown_icon = pygame.image.load("cooldown_icon.png") 
 cooldown_icon = pygame.transform.scale(cooldown_icon, (50, 50))  
@@ -544,7 +620,7 @@ class Enemy:
         self.is_hit = False
         self.just_shot = False
     
-    def hit(self):  
+    def hit(self): 
         self.is_hit = True
         self.image = self.hit_image
 
@@ -658,11 +734,16 @@ while game:
                     bullet = Bullet(P1.rect.centerx, P1.rect.centery, 10, dir_vector, 'bullet.png', player_bullet=True) 
                     bullets.append(bullet)
                     shooting = True
-                    
+
                 else:
-                    for button in buttons:
-                        if button.is_clicked(mouse_pos):
-                            button.action()
+                    if not in_settings:
+                        for button in perks:
+                            if button.is_clicked(mouse_pos):
+                                button.action()
+                    else:
+                        for button in settings:
+                            if button.is_clicked(mouse_pos):
+                                button.action()
         elif event.type == MOUSEBUTTONUP:
             if event.button == 1:
                 shooting = False
@@ -672,6 +753,7 @@ while game:
                     teleport_sound.play()
                     P1.teleport(current_frame)
             if event.key == K_ESCAPE:
+                in_settings = False
                 if paused:
                     pause_off_sound.play()
                 else:
@@ -694,12 +776,12 @@ while game:
             if bullet.rect.colliderect(enemy.rect) and enemy.spawn_duration <= 0 and not enemy.is_dead:  
                 enemy.health -= 50  
                 enemy.hit()
-                enemy_hurt_sound.play()  
+                enemy_hurt_sound.play()
                 bullet_buffer.append(bullet)
                 if enemy.health <= 0 and not enemy.is_dead:
                     enemy.die() 
                     points += 1
-                    score += 1  
+                    score += 1
                 break
     for bullet in bullet_buffer:
         bullets.remove(bullet)  
@@ -766,8 +848,9 @@ while game:
                     f.write(str(high_score) + '\n')
 
             pygame.mixer.music.load(end_music)
-            pygame.mixer.music.set_volume(1.3)
-            pygame.mixer.music.play(-1)
+            if not muted:
+                pygame.mixer.music.set_volume(1.3)
+                pygame.mixer.music.play(-1)
 
             if game_over_screen(score):
                 P1 = Player()
