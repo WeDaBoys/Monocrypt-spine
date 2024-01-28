@@ -3,10 +3,10 @@
 # Course: PSP0101 PROBLEM SOLVING AND PROGRAM DESIGN
 # Class: TL6L
 # Year: 2023/24 Trimester 1
-# Names: MEMBER_NAME_1 | MEMBER_NAME_2 | LEE MING FUNG
-# IDs: MEMBER_ID_1 | MEMBER_ID_2 | 1221109363
-# Emails: MEMBER_EMAIL_1 | MEMBER_EMAIL_2 | 1221109363@student.mmu.edu.my
-# Phones: MEMBER_PHONE_1 | MEMBER_PHONE_2 | 0182021399
+# Names: MUHAMMAD IRFAN SYAZWAN BIN MD. ARIFIN | ERIN KLARISA BINTI MOHAMMAD FAIRUZ | LEE MING FUNG
+# IDs: 1221108127 | 1221109372 | 1221109363
+# Emails: 1221108127@student.mmu.edu | 1221109372@student.mmu.edu.my | 1221109363@student.mmu.edu.my
+# Phones: 0123559141 | 0193517153 | 0182021399
 # *********************************************************
 
 import pygame
